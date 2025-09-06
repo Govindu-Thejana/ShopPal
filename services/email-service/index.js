@@ -1,110 +1,93 @@
-// import { Kafka } from "kafkajs";
-
-// const kafka = new Kafka({
-//   clientId: "email-service",
-//   brokers: ["localhost:9094"],
-// });
-
-// const producer = kafka.producer();
-// const consumer = kafka.consumer({ groupId: "email-service" });
-
-// const run = async () => {
-//   try {
-//     await consumer.connect();
-//     await producer.connect();
-//     await consumer.subscribe({
-//       topic: "order-successful",
-//       fromBeginning: true,
-//     });
-
-//     await consumer.run({
-//       eachMessage: async ({ topic, partition, message }) => {
-//         const { userId, orderId } = JSON.parse(message.value.toString());
-
-//         // TODO : send email to the user
-//         const dummyEmailId = Math.floor(Math.random() * 10000);
-//         console.log(
-//           "Email Consumer sending email for user:",
-//           userId,
-//           "with order ID:",
-//           orderId
-//         );
-
-//         await producer.send({
-//           topic: "email-successful",
-//           messages: [
-//             { value: JSON.stringify({ userId, emailId: dummyEmailId }) },
-//           ],
-//         });
-//       },
-//     });
-//   } catch (error) {
-//     console.error("Error connecting to Kafka:", error);
-//   }
-// };
-
-// run().catch(console.error);
-
 import { Kafka } from "kafkajs";
 import nodemailer from "nodemailer";
+import { buildOrderEmail } from "./emailTemplate.js";
 
 const kafka = new Kafka({
   clientId: "email-service",
-  brokers: ["localhost:9094"],
+  brokers: (process.env.KAFKA_BROKERS || "kafka:9092").split(","),
 });
 
 const producer = kafka.producer();
 const consumer = kafka.consumer({ groupId: "email-service" });
 
-// Configure transporter (example with Gmail SMTP)
+// SMTP (Gmail app password required)
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "nisalzoysa2001@gmail.com", // Replace with your Gmail
-    pass: "dvwe axbp djfi lvxn", // Use App Password (not your Gmail password)
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
 
 const run = async () => {
-  try {
-    await consumer.connect();
-    await producer.connect();
-    await consumer.subscribe({
-      topic: "order-successful",
-      fromBeginning: true,
-    });
+  await consumer.connect();
+  await producer.connect();
+  await consumer.subscribe({ topic: "order-successful", fromBeginning: true });
 
-    await consumer.run({
-      eachMessage: async ({ topic, partition, message }) => {
-        const { userId, orderId } = JSON.parse(message.value.toString());
+  await consumer.run({
+    eachMessage: async ({ message }) => {
+      const { userId, orderId, cart = [] } = JSON.parse(message.value.toString());
 
-        // Send email
-        const mailOptions = {
-          from: "nisalzoysa2001@gmail.com",
-          to: "nisalchandirade@gmail.com",
-          subject: `Order Confirmation - ${orderId}`,
-          text: `Hello User ${userId}, your order with ID ${orderId} has been successfully placed!`,
-        };
+      // Map your cart to items (name/qty/price). Adjust as needed.
+      const items = cart.map((c) => ({
+        name: c.name,
+        qty: c.qty || 1,
+        price: Number(c.price || 0),
+      }));
 
-        try {
-          const info = await transporter.sendMail(mailOptions);
-          console.log("✅ Email sent:", info.messageId);
+      const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+      const shipping = 0;
+      const tax = +(subtotal * 0.08).toFixed(2);
+      const total = +(subtotal + shipping + tax).toFixed(2);
 
-          // Send Kafka message after success
-          await producer.send({
-            topic: "email-successful",
-            messages: [
-              { value: JSON.stringify({ userId, emailId: info.messageId }) },
-            ],
-          });
-        } catch (err) {
-          console.error("❌ Failed to send email:", err);
-        }
-      },
-    });
-  } catch (error) {
-    console.error("Error connecting to Kafka:", error);
-  }
+      const { subject, html, text } = buildOrderEmail({
+        userName: `User ${userId}`,
+        orderId,
+        items,
+        subtotal,
+        shipping,
+        tax,
+        total,
+        deliveryEta: "Aug 29 – Sep 19",
+        supportEmail: "amarasingheau@gmail.com",
+        address: {
+          name: `User ${userId}`,
+          line1: "123 Market St",
+          city: "Colombo",
+          state: "WP",
+          zip: "00001",
+          country: "Sri Lanka",
+        },
+      });
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: [process.env.EMAIL_USER, "amarasingheau@gmail.com"].filter(Boolean).join(", "),
+        subject,
+        html,
+        text, // good for spam filters + accessibility
+        attachments: [
+          // Optional embedded logo
+          {
+            filename: "logo.png",
+            path: "/app/assets/logo.png", // place a small logo file in services/email-service/assets/logo.png
+            cid: "shopmateLogo",
+          },
+        ],
+      };
+
+      try {
+        const info = await transporter.sendMail(mailOptions);
+        console.log("✅ Email sent:", info.messageId);
+        await producer.send({
+          topic: "email-successful",
+          messages: [{ value: JSON.stringify({ userId, emailId: info.messageId }) }],
+        });
+      } catch (err) {
+        console.error("❌ Email send failed:", err.message);
+      }
+    },
+  });
 };
 
 run().catch(console.error);

@@ -33,7 +33,7 @@ app.options(/.*/, cors(corsConfig));
 app.use(express.json());
 
 /* ------------- Kafka ------------- */
-const kafka = new Kafka({ clientId: "login-service", brokers: ["localhost:9094"] });
+const kafka = new Kafka({ clientId: "login-service", brokers: [process.env.KAFKA_BROKERS || "kafka:9092"] });
 const producer = kafka.producer();
 
 /* ------------- JWT ------------- */

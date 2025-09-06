@@ -18,7 +18,7 @@ const PORT = process.env.PORT || 8001;
 
 const kafka = new Kafka({
   clientId: "analytic-service",
-  brokers: ["localhost:9094"],
+  brokers: [process.env.KAFKA_BROKERS || "kafka:9092"],
 });
 
 const consumer = kafka.consumer({ groupId: "analytic-service" });

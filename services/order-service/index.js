@@ -24,7 +24,7 @@ const Order = mongoose.model("Order", orderSchema);
 // ===== Kafka Setup =====
 const kafka = new Kafka({
   clientId: "order-service",
-  brokers: ["localhost:9094"],
+  brokers: [process.env.KAFKA_BROKERS || "kafka:9092"],
 });
 
 const producer = kafka.producer();
