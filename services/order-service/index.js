@@ -1,15 +1,22 @@
 // index.js
 import { Kafka } from "kafkajs";
 import mongoose from "mongoose";
+import dns from "node:dns";
 
 // ===== MongoDB Connection =====
-const MONGO_URI =
-  "mongodb+srv://nisalmicro:micro1234@microcluster.w872zhn.mongodb.net/?retryWrites=true&w=majority&appName=microcluster";
+const MONGO_URI = "mongodb+srv://nisalmicro:micro1234@microcluster.w872zhn.mongodb.net/?retryWrites=true&w=majority&appName=microcluster";
 
-mongoose
-  .connect(MONGO_URI)
-  .then(() => console.log("✅ Connected to MongoDB Atlas"))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
+const connectMongo = async () => {
+  try {
+    dns.setServers(["1.1.1.1", "1.0.0.1", "8.8.8.8", "8.8.4.4"]);
+    await mongoose.connect(MONGO_URI);
+    console.log("✅ Connected to MongoDB Atlas");
+  } catch (err) {
+    console.error("❌ MongoDB connection error:", err);
+  }
+};
+
+connectMongo();
 
 // ===== Order Model =====
 const orderSchema = new mongoose.Schema({
@@ -67,9 +74,7 @@ const run = async () => {
           ],
         });
 
-        console.log(
-          `📤 order-successful event sent for Order ID: ${dummyOrderId}`
-        );
+        console.log(`📤 order-successful event sent for Order ID: ${dummyOrderId}`);
       },
     });
   } catch (error) {

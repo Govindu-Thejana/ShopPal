@@ -1,5 +1,8 @@
+import "dotenv/config";
 import { Kafka } from "kafkajs";
 import nodemailer from "nodemailer";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { buildOrderEmail } from "./emailTemplate.js";
 
 const kafka = new Kafka({
@@ -9,6 +12,8 @@ const kafka = new Kafka({
 
 const producer = kafka.producer();
 const consumer = kafka.consumer({ groupId: "email-service" });
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // SMTP (Gmail app password required)
 const transporter = nodemailer.createTransport({
@@ -49,7 +54,7 @@ const run = async () => {
         tax,
         total,
         deliveryEta: "Aug 29 – Sep 19",
-        supportEmail: "amarasingheau@gmail.com",
+        supportEmail: process.env.EMAIL_USER || "support@shopmate.local",
         address: {
           name: `User ${userId}`,
           line1: "123 Market St",
@@ -62,7 +67,7 @@ const run = async () => {
 
       const mailOptions = {
         from: process.env.EMAIL_USER,
-        to: [process.env.EMAIL_USER, "amarasingheau@gmail.com"].filter(Boolean).join(", "),
+        to: [process.env.EMAIL_USER].filter(Boolean).join(", "),
         subject,
         html,
         text, // good for spam filters + accessibility
@@ -70,7 +75,7 @@ const run = async () => {
           // Optional embedded logo
           {
             filename: "logo.png",
-            path: "/app/assets/logo.png", // place a small logo file in services/email-service/assets/logo.png
+            path: path.join(__dirname, "assets", "logo.png"),
             cid: "shopmateLogo",
           },
         ],
