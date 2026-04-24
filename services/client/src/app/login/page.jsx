@@ -63,6 +63,8 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY || "http://localhost:8088";
+
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -74,7 +76,7 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
     try {
-      const response = await axios.post("http://localhost:7070/login", {
+      const response = await axios.post(`${API_GATEWAY}/api/auth/login`, {
         username,
         password,
       });
@@ -95,12 +97,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-white-400 to-white-400">
       <div className="bg-white rounded-2xl shadow-xl p-10 w-full max-w-sm">
-        <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
-          Welcome Back
-        </h1>
-        <p className="text-center text-gray-500 mb-6">
-          Login to access your cart and orders
-        </p>
+        <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">Welcome Back</h1>
+        <p className="text-center text-gray-500 mb-6">Login to access your cart and orders</p>
 
         <input
           type="text"
@@ -128,8 +126,7 @@ export default function LoginPage() {
         {error && <p className="text-red-500 text-center">{error}</p>}
 
         <div className="text-center mt-4 text-gray-400 text-sm">
-          Do not have an account?{" "}
-          <span className="text-purple-600">Sign Up</span>
+          Do not have an account? <span className="text-purple-600">Sign Up</span>
         </div>
       </div>
     </div>

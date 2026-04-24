@@ -1,40 +1,44 @@
 "use client";
 
-// import axios from "axios";
+import axios, { isAxiosError } from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 
+const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY || "http://localhost:8088";
+
 export default function Signup() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("");
+  const [role, setRole] = useState("user");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!username || !password || !role) {
-      setError("Please fill in all fields");
+    if (!username || !password) {
+      setError("Please fill in username and password");
       return;
     }
     setLoading(true);
     setError("");
     try {
-      //   const response = await axios.post("http://localhost:7000/signup", {
-      //     username,
-      //     password,
-      //     role,
-      //   });
+      await axios.post(`${API_GATEWAY}/api/auth/signup`, {
+        username,
+        password,
+        role,
+      });
 
       toast.success("Signup successful! Please login.");
 
       // Redirect to login after signup
       router.push("/login");
-    } catch (err) {
-      const msg = err.response?.data?.message || "Signup failed";
+    } catch (err: unknown) {
+      const msg = isAxiosError(err)
+        ? err.response?.data?.message || "Signup failed"
+        : "Signup failed";
       toast.error(`❌ ${msg}`);
     } finally {
       setLoading(false);
@@ -91,9 +95,7 @@ export default function Signup() {
               onChange={(e) => setRole(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-pink-500"
             >
-              <option value="">Select a role</option>
               <option value="user">User</option>
-              <option value="admin">Admin</option>
               <option value="seller">Seller</option>
             </select>
           </div>

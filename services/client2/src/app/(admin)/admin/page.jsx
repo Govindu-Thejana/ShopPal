@@ -2,20 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  FaShoppingCart,
-  FaDollarSign,
-  FaUsers,
-} from "react-icons/fa";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { FaShoppingCart, FaDollarSign, FaUsers } from "react-icons/fa";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+
+const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY || "http://localhost:8088";
+
 const salesData = [
   { name: "Jan", sales: 4000 },
   { name: "Feb", sales: 3000 },
@@ -41,13 +32,12 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [summaryRes, paymentsRes, ordersRes, emailsRes] =
-          await Promise.all([
-            fetch("http://localhost:8001/dashboard/summary"),
-            fetch("http://localhost:8001/dashboard/recent-payments"),
-            fetch("http://localhost:8001/dashboard/recent-orders"),
-            fetch("http://localhost:8001/dashboard/recent-emails"),
-          ]);
+        const [summaryRes, paymentsRes, ordersRes, emailsRes] = await Promise.all([
+          fetch(`${API_GATEWAY}/api/analytics/dashboard/summary`),
+          fetch(`${API_GATEWAY}/api/analytics/dashboard/recent-payments`),
+          fetch(`${API_GATEWAY}/api/analytics/dashboard/recent-orders`),
+          fetch(`${API_GATEWAY}/api/analytics/dashboard/recent-emails`),
+        ]);
 
         setSummary(await summaryRes.json());
         setRecentPayments(await paymentsRes.json());
@@ -74,31 +64,16 @@ export default function AdminDashboard() {
     <div className="flex flex-col justify-center p-6 bg-gray-50 min-h-screen">
       <div className="flex justify-between mb-6">
         <h1 className="text-3xl font-bold">📊 Admin Dashboard</h1>
-        <button
-          onClick={handleLogout}
-          className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md cursor-pointer"
-        >
+        <button onClick={handleLogout} className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md cursor-pointer">
           Logout
         </button>
       </div>
 
       {/* Top Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard
-          title="Orders"
-          value={summary.totalOrders}
-          icon={<FaShoppingCart className="text-blue-500 text-3xl" />}
-        />
-        <StatCard
-          title="Payments"
-          value={summary.totalPayments}
-          icon={<FaDollarSign className="text-green-500 text-3xl" />}
-        />
-        <StatCard
-          title="Emails"
-          value={summary.totalEmails}
-          icon={<FaUsers className="text-purple-500 text-3xl" />}
-        />
+        <StatCard title="Orders" value={summary.totalOrders} icon={<FaShoppingCart className="text-blue-500 text-3xl" />} />
+        <StatCard title="Payments" value={summary.totalPayments} icon={<FaDollarSign className="text-green-500 text-3xl" />} />
+        <StatCard title="Emails" value={summary.totalEmails} icon={<FaUsers className="text-purple-500 text-3xl" />} />
         {/* <StatCard
           title="Products"
           value="320" // If you add Kafka for products later, replace here
@@ -126,13 +101,7 @@ export default function AdminDashboard() {
             </li>
           )}
         />
-        <RecentList
-          title="Recent Emails"
-          data={recentEmails}
-          renderItem={(e) => (
-            <li key={e.userId + e.emailId}>✉️ Email sent to user {e.userId}</li>
-          )}
-        />
+        <RecentList title="Recent Emails" data={recentEmails} renderItem={(e) => <li key={e.userId + e.emailId}>✉️ Email sent to user {e.userId}</li>} />
       </div>
 
       {/* Sales Chart - (static for now, you can map to payments later) */}
@@ -144,12 +113,7 @@ export default function AdminDashboard() {
             <XAxis dataKey="name" />
             <YAxis />
             <Tooltip />
-            <Line
-              type="monotone"
-              dataKey="sales"
-              stroke="#3b82f6"
-              strokeWidth={2}
-            />
+            <Line type="monotone" dataKey="sales" stroke="#3b82f6" strokeWidth={2} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -173,9 +137,7 @@ function RecentList({ title, data, renderItem }) {
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-lg font-semibold mb-4">{title}</h2>
-      <ul className="space-y-2 text-gray-700 text-sm">
-        {data.length > 0 ? data.map(renderItem) : <li>No records yet</li>}
-      </ul>
+      <ul className="space-y-2 text-gray-700 text-sm">{data.length > 0 ? data.map(renderItem) : <li>No records yet</li>}</ul>
     </div>
   );
 }

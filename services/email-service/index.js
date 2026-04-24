@@ -1,30 +1,46 @@
-import "dotenv/config";
+import dotenv from "dotenv";
 import { Kafka } from "kafkajs";
 import nodemailer from "nodemailer";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildOrderEmail } from "./emailTemplate.js";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, ".env") });
+
 const kafka = new Kafka({
   clientId: "email-service",
-  brokers: (process.env.KAFKA_BROKERS || "kafka:9092").split(","),
+  brokers: (process.env.KAFKA_BROKERS || (process.env.NODE_ENV === "production" ? "kafka:9092" : "localhost:9094")).split(","),
 });
 
 const producer = kafka.producer();
 const consumer = kafka.consumer({ groupId: "email-service" });
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+
+const emailUser = process.env.EMAIL_USER?.trim();
+const emailPass = (process.env.EMAIL_PASS || "").replace(/\s+/g, "");
+const emailTo = (process.env.EMAIL_TO || emailUser || "").trim();
+
+const validateEmailConfig = () => {
+  if (!emailUser || !emailPass) {
+    throw new Error(
+      "Missing EMAIL_USER or EMAIL_PASS in services/email-service/.env"
+    );
+  }
+};
 
 // SMTP (Gmail app password required)
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: emailUser,
+    pass: emailPass,
   },
 });
 
 const run = async () => {
+  validateEmailConfig();
+
   await consumer.connect();
   await producer.connect();
   await consumer.subscribe({ topic: "order-successful", fromBeginning: true });
@@ -54,7 +70,7 @@ const run = async () => {
         tax,
         total,
         deliveryEta: "Aug 29 – Sep 19",
-        supportEmail: process.env.EMAIL_USER || "support@shopmate.local",
+        supportEmail: emailUser,
         address: {
           name: `User ${userId}`,
           line1: "123 Market St",
@@ -66,8 +82,8 @@ const run = async () => {
       });
 
       const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: [process.env.EMAIL_USER].filter(Boolean).join(", "),
+        from: emailUser,
+        to: emailTo,
         subject,
         html,
         text, // good for spam filters + accessibility

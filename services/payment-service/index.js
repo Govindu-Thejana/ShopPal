@@ -7,22 +7,29 @@ const app = express();
 app.use(
   cors({
     origin: "http://localhost:3000",
-  })
+  }),
 );
 app.use(express.json());
 
 const kafka = new Kafka({
   clientId: "payment-service",
-  brokers: [process.env.KAFKA_BROKERS || "kafka:9092"],
+  brokers: [process.env.KAFKA_BROKERS || (process.env.NODE_ENV === "production" ? "kafka:9092" : "localhost:9094")],
 });
 
 const producer = kafka.producer({
   createPartitioner: Partitioners.LegacyPartitioner,
 });
 
+let kafkaReady = false;
+
 const connectToKafka = async () => {
+  if (kafkaReady) {
+    return true;
+  }
+
   try {
     await producer.connect();
+    kafkaReady = true;
     console.log("✅ Kafka Producer connected successfully!");
     return true;
   } catch (err) {
@@ -30,6 +37,61 @@ const connectToKafka = async () => {
     return false;
   }
 };
+
+const sendPaymentEvent = async (kafkaMessage, userId) => {
+  await connectToKafka();
+
+  try {
+    await producer.send({
+      topic: "payment-successful",
+      messages: [
+        {
+          key: userId.toString(),
+          value: JSON.stringify(kafkaMessage),
+        },
+      ],
+    });
+
+    console.log("✅ Kafka message sent successfully to 'payment-successful' topic:", kafkaMessage);
+    return true;
+  } catch (kafkaError) {
+    kafkaReady = false;
+    console.error("❌ Kafka message failed:", kafkaError.message);
+
+    try {
+      await producer.disconnect();
+    } catch {
+      // ignore disconnect cleanup errors
+    }
+
+    const reconnected = await connectToKafka();
+    if (!reconnected) {
+      return false;
+    }
+
+    await producer.send({
+      topic: "payment-successful",
+      messages: [
+        {
+          key: userId.toString(),
+          value: JSON.stringify(kafkaMessage),
+        },
+      ],
+    });
+
+    kafkaReady = true;
+    console.log("✅ Kafka message sent successfully to 'payment-successful' topic after reconnect:", kafkaMessage);
+    return true;
+  }
+};
+
+app.get("/", (_req, res) => {
+  res.json({ ok: true });
+});
+
+app.get("/health", (_req, res) => {
+  res.json({ ok: true, service: "payment-service", kafkaReady });
+});
 
 app.post("/payment-service", async (req, res) => {
   try {
@@ -40,32 +102,20 @@ app.post("/payment-service", async (req, res) => {
     // TODO: PAYMENT PROCESSING
 
     // KAFKA - Send message to payment-successful topic
-    try {
-      console.log("📤 Attempting to send Kafka message...");
-      const kafkaMessage = {
-        userId,
-        username,
-        cart,
-        timestamp: new Date().toISOString(),
-      };
+    const kafkaMessage = {
+      userId,
+      username,
+      cart,
+      timestamp: new Date().toISOString(),
+    };
 
-      await producer.send({
-        topic: "payment-successful",
-        messages: [
-          {
-            key: userId.toString(),
-            value: JSON.stringify(kafkaMessage),
-          },
-        ],
+    console.log("📤 Attempting to send Kafka message...");
+    const delivered = await sendPaymentEvent(kafkaMessage, userId);
+    if (!delivered) {
+      return res.status(503).json({
+        error: "Payment accepted, but Kafka delivery failed",
+        message: "Unable to publish payment event",
       });
-
-      console.log(
-        "✅ Kafka message sent successfully to 'payment-successful' topic:",
-        kafkaMessage
-      );
-    } catch (kafkaError) {
-      console.error("❌ Kafka message failed:", kafkaError.message);
-      // Don't fail the payment if Kafka fails
     }
 
     // Use Promise-based timeout instead of callback
@@ -93,9 +143,16 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(8000, () => {
-  connectToKafka();
-  console.log("Payment service is running on port 8000");
+const bootstrap = async () => {
+  await connectToKafka();
+  app.listen(8000, () => {
+    console.log("Payment service is running on port 8000");
+  });
+};
+
+bootstrap().catch((err) => {
+  console.error("❌ Payment service bootstrap failed:", err);
+  process.exit(1);
 });
 
 export default app;

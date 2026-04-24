@@ -7,7 +7,6 @@ const OrderSummary = ({ total }) => {
   const router = useRouter();
 
   const handlePlaceOrder = () => {
-    toast.success(`Your order has been placed successfully!`)
     router.push(`/checkout?total=${total}`);
   };
 
