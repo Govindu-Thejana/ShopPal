@@ -47,7 +47,7 @@ const run = async () => {
 
   await consumer.run({
     eachMessage: async ({ message }) => {
-      const { userId, orderId, cart = [] } = JSON.parse(message.value.toString());
+      const { userId, username, orderId, cart = [] } = JSON.parse(message.value.toString());
 
       // Map your cart to items (name/qty/price). Adjust as needed.
       const items = cart.map((c) => ({
@@ -62,7 +62,7 @@ const run = async () => {
       const total = +(subtotal + shipping + tax).toFixed(2);
 
       const { subject, html, text } = buildOrderEmail({
-        userName: `User ${userId}`,
+        userName: username || `User ${userId}`,
         orderId,
         items,
         subtotal,
@@ -72,7 +72,7 @@ const run = async () => {
         deliveryEta: "Aug 29 – Sep 19",
         supportEmail: emailUser,
         address: {
-          name: `User ${userId}`,
+          name: username || `User ${userId}`,
           line1: "123 Market St",
           city: "Colombo",
           state: "WP",
@@ -98,6 +98,7 @@ const run = async () => {
       };
 
       try {
+        console.log(`📧 Preparing order email for order ${orderId} with ${items.length} item(s)`);
         const info = await transporter.sendMail(mailOptions);
         console.log("✅ Email sent:", info.messageId);
         await producer.send({
