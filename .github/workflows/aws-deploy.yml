@@ -36,37 +36,31 @@ jobs:
           {
             "commands": [
               "set -e",
-
-              "echo '=== Installing dependencies safely ==='",
-
-              "if command -v apt >/dev/null 2>&1; then",
-              "  sudo apt update -y",
-              "  sudo apt install -y git curl unzip",
-              "elif command -v yum >/dev/null 2>&1; then",
-              "  sudo yum install -y git unzip",
-              "fi",
-
+          
               "echo 'Checking git...'",
-              "git --version",
-
-              "echo 'Preparing directory...'",
-              "sudo mkdir -p /opt/shopmate",
-
-              "echo 'Cloning or updating repo...'",
-
-              "if [ ! -d /opt/shopmate/.git ]; then",
-              "  sudo git clone https://github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
+          
+              "if ! command -v git >/dev/null 2>&1; then",
+              "  echo 'Installing git...'",
+              "  sudo yum install -y git unzip",
               "else",
-              "  cd /opt/shopmate && sudo git pull origin main",
+              "  echo 'Git already installed'",
               "fi",
-
+          
+              "git --version",
+          
+              "mkdir -p /opt/shopmate",
+          
+              "if [ ! -d /opt/shopmate/.git ]; then",
+              "  git clone https://github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
+              "else",
+              "  cd /opt/shopmate && git pull origin main",
+              "fi",
+          
               "cd /opt/shopmate",
-
-              "echo 'Fixing permissions...'",
-              "sudo chmod +x deploy/aws/deploy.sh deploy/aws/write-env.sh",
-
-              "echo 'Running deployment...'",
-              "sudo ./deploy/aws/deploy.sh"
+          
+              "chmod +x deploy/aws/deploy.sh deploy/aws/write-env.sh",
+          
+              "./deploy/aws/deploy.sh"
             ]
           }
           JSON
