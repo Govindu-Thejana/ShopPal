@@ -15,6 +15,7 @@ env:
   APP_NAME: shopmate
   APP_ENV: prod
   GITHUB_BRANCH: main
+  GH_PAT: ${{ secrets.GH_PAT }}
 
 jobs:
   deploy:
@@ -30,54 +31,43 @@ jobs:
           role-to-assume: arn:aws:iam::055679187407:role/AWS_GITHUB_ACTIONS_ROLE
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Deploy to EC2 instances via SSM
+      - name: Deploy to EC2 via SSM
         run: |
-          PARAMS=$(cat <<'JSON'
-          {
-            "commands": [
-              "set -e",
-          
-              "echo 'Checking git...'",
-          
-              "if ! command -v git >/dev/null 2>&1; then",
-              "  echo 'Installing git...'",
-              "  sudo yum install -y git unzip",
-              "else",
-              "  echo 'Git already installed'",
-              "fi",
-          
-              "git --version",
-          
-              "mkdir -p /opt/shopmate",
-          
-              "if [ ! -d /opt/shopmate/.git ]; then",
-              "  git clone https://github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
-              "else",
-              "  cd /opt/shopmate && git pull origin main",
-              "fi",
-          
-              "cd /opt/shopmate",
-          
-              "chmod +x deploy/aws/deploy.sh deploy/aws/write-env.sh",
-          
-              "./deploy/aws/deploy.sh"
-            ]
-          }
-          JSON
-          )
-
           COMMAND_ID=$(aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --targets "Key=tag:App,Values=shopmate" "Key=tag:Environment,Values=prod" \
             --comment "Deploy ShopMate from GitHub Actions" \
-            --parameters "${PARAMS}" \
+            --parameters '{
+              "commands": [
+                "set -e",
+
+                "echo === Preparing server ===",
+
+                "command -v git >/dev/null 2>&1 || sudo yum install -y git unzip",
+
+                "git --version",
+
+                "rm -rf /opt/shopmate",
+                "mkdir -p /opt/shopmate",
+
+                "echo Cloning repository...",
+
+                "git clone https://x-access-token:'"${GH_PAT}"'@github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
+
+                "cd /opt/shopmate",
+
+                "chmod +x deploy/aws/deploy.sh deploy/aws/write-env.sh",
+
+                "./deploy/aws/deploy.sh"
+              ]
+            }' \
             --query "Command.CommandId" \
             --output text)
 
-          echo "Command ID: ${COMMAND_ID}"
+          echo "Command ID: $COMMAND_ID"
 
           sleep 20
 
           aws ssm list-command-invocations \
-            --command-id "${COMMAND_ID}" \
+            --command-id "$COMMAND_ID" \
             --details
