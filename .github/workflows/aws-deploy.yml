@@ -31,43 +31,50 @@ jobs:
           role-to-assume: arn:aws:iam::055679187407:role/AWS_GITHUB_ACTIONS_ROLE
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Deploy to EC2 via SSM
+      - name: Deploy via SSM
         run: |
+          set -e
+
+          PARAMS=$(cat <<'EOF'
+{
+  "commands": [
+    "set -e",
+
+    "echo '=== Preparing server ==='",
+
+    "echo 'Checking git...'",
+    "if ! command -v git >/dev/null 2>&1; then sudo yum install -y git unzip; fi",
+    "git --version",
+
+    "echo 'Cleaning old deployment...'",
+    "sudo rm -rf /opt/shopmate",
+    "sudo mkdir -p /opt/shopmate",
+
+    "echo 'Cloning repository...'",
+    "git clone https://x-access-token:${GH_PAT}@github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
+
+    "cd /opt/shopmate",
+
+    "echo 'Checking project structure...'",
+    "ls -la",
+
+    "echo 'Checking deploy scripts...'",
+    "ls -la deploy/aws || true",
+
+    "chmod +x deploy/aws/deploy.sh deploy/aws/write-env.sh || true",
+
+    "echo 'Running deployment script...'",
+    "./deploy/aws/deploy.sh"
+  ]
+}
+EOF
+)
+
           COMMAND_ID=$(aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --targets "Key=tag:App,Values=shopmate" "Key=tag:Environment,Values=prod" \
             --comment "Deploy ShopMate from GitHub Actions" \
-            --parameters '{
-              "commands": [
-                "set -e",
-
-                "echo '=== Preparing server ==='",
-
-                "echo 'Checking git...'",
-                "command -v git >/dev/null 2>&1 || sudo yum install -y git unzip",
-
-                "git --version",
-
-                "echo 'Cleaning old deployment...'",
-                "rm -rf /opt/shopmate",
-                "mkdir -p /opt/shopmate",
-
-                "echo 'Cloning repository...'",
-                "git clone https://x-access-token:'"${GH_PAT}"'@github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
-
-                "echo 'Moving into project root...'",
-                "cd /opt/shopmate/ShopPal",
-
-                "echo 'Verifying files...'",
-                "ls -la deploy/aws",
-
-                "echo 'Making scripts executable...'",
-                "chmod +x deploy/aws/deploy.sh deploy/aws/write-env.sh",
-
-                "echo 'Running deployment...'",
-                "./deploy/aws/deploy.sh"
-              ]
-            }' \
+            --parameters "$PARAMS" \
             --query "Command.CommandId" \
             --output text)
 
