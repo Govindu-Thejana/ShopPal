@@ -1,20 +1,21 @@
 "use client";
 
 import React, { useState } from "react";
+import { useContext } from "react";
 import { FaCcVisa, FaCcPaypal, FaGooglePay } from "react-icons/fa";
+import { toast } from "react-toastify";
 
 import Pay from "../../../components/Pay";
-import { cart } from "../../../constants/Products";
+import { CartContext } from "../../../context/CartContext";
 
 const CheckoutPage = () => {
   const [selectedPayment, setSelectedPayment] = useState("");
+  const { cart, clearCart } = useContext(CartContext);
 
   return (
     <div className=" bg-gray-50 flex justify-center py-10 px-4">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full max-w-6xl">
-  
         <div className="lg:col-span-2 space-y-6">
- 
           <div className="bg-white shadow rounded-2xl p-5">
             <h2 className="text-lg font-semibold mb-3">Shipping address</h2>
             <div>
@@ -31,11 +32,9 @@ const CheckoutPage = () => {
             </button>
           </div>
 
-
           <div className="bg-white shadow rounded-2xl p-5">
             <h2 className="text-lg font-semibold mb-3">Payment Methods</h2>
             <div className="space-y-3">
-     
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="radio"
@@ -48,7 +47,6 @@ const CheckoutPage = () => {
                 <span className="text-gray-700">924559******1099</span>
               </label>
 
-   
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="radio"
@@ -59,7 +57,6 @@ const CheckoutPage = () => {
                 />
                 <span className="text-gray-700">Add a new card</span>
               </label>
-
 
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
@@ -73,7 +70,6 @@ const CheckoutPage = () => {
                 <span className="text-gray-700">Google Pay</span>
               </label>
 
-    
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="radio"
@@ -88,7 +84,6 @@ const CheckoutPage = () => {
             </div>
           </div>
 
-   
           <div className="bg-white shadow rounded-2xl p-5">
             <h2 className="text-lg font-semibold mb-3">Shipping method</h2>
             <p className="text-gray-700">
@@ -99,7 +94,13 @@ const CheckoutPage = () => {
         </div>
 
         <div className="lg:col-span-1">
-          <Pay cart={cart} />
+          <Pay
+            cart={cart}
+            onPaymentSuccess={() => {
+              clearCart();
+              toast.success("Order placed and cart cleared.");
+            }}
+          />
         </div>
       </div>
     </div>

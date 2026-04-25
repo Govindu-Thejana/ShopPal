@@ -1,26 +1,82 @@
-export const cart = [
-    {
-      id: 1,
-      name: "Nike Air Max",
-      price: 129.9,
-      image: "/product1.png",
-      description:
-        "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos. Lorem ipsum dolor sit amet consectetur adipisicing elit.",
-    },
-    {
-      id: 2,
-      name: "Adidas Superstar Cap",
-      price: 29.9,
-      image: "/product2.png",
-      description:
-        "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos. Lorem ipsum dolor sit amet consectetur adipisicing elit.",
-    },
-    {
-      id: 3,
-      name: "Puma Yellow T-Shirt",
-      price: 49.9,
-      image: "/product3.png",
-      description:
-        "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos. Lorem ipsum dolor sit amet consectetur adipisicing elit.",
-    },
-  ];
+export const defaultProducts = [
+  {
+    id: 1,
+    name: "Nike Air Max",
+    category: "men",
+    price: 129.9,
+    image: "/product1.png",
+    description: "Premium quality shoes perfect for sports and casual wear.",
+  },
+  {
+    id: 2,
+    name: "Adidas Superstar Cap",
+    category: "accessories",
+    price: 29.9,
+    image: "/product2.png",
+    description: "Stylish cap to match your streetwear.",
+  },
+  {
+    id: 3,
+    name: "Puma Yellow T-Shirt",
+    category: "women",
+    price: 49.9,
+    image: "/product3.png",
+    description: "Soft cotton t-shirt for all-day comfort.",
+  },
+  {
+    id: 4,
+    name: "Nike Blazer",
+    category: "men",
+    price: 129.9,
+    image: "/product4.jpg",
+    description: "Classic Nike Blazer sneakers.",
+  },
+  {
+    id: 5,
+    name: "Titans Smart Watch",
+    category: "accessories",
+    price: 29.9,
+    image: "/product5.jpg",
+    description: "Smartwatch with fitness tracking.",
+  },
+  {
+    id: 6,
+    name: "Adidas Superstar Hat",
+    category: "accessories",
+    price: 49.9,
+    image: "/product6.jpg",
+    description: "Trendy hat for everyday use.",
+  },
+  {
+    id: 7,
+    name: "Adidas Jacket",
+    category: "women",
+    price: 129.9,
+    image: "/product7.jpg",
+    description: "Warm and stylish Adidas jacket.",
+  },
+  {
+    id: 8,
+    name: "Adidas Sport Shoe",
+    category: "kids",
+    price: 29.9,
+    image: "/product8.jpg",
+    description: "Sport shoe for all-day comfort.",
+  },
+  {
+    id: 9,
+    name: "Adidas Sunglass",
+    category: "accessories",
+    price: 49.9,
+    image: "/product9.jpg",
+    description: "UV protected sunglasses with style.",
+  },
+  {
+    id: 10,
+    name: "Denim Trouser",
+    category: "men",
+    price: 49.9,
+    image: "/product10.jpg",
+    description: "Comfort-fit trousers for daily wear.",
+  },
+];

@@ -5,85 +5,14 @@ import Image from "next/image";
 import { useContext } from "react";
 
 import { CartContext } from "../../../context/CartContext";
+import { ProductContext } from "../../../context/ProductContext";
 
 function Page() {
   const { addToCart } = useContext(CartContext);
+  const { products } = useContext(ProductContext);
 
-  const cart = [
-    {
-      id: 1,
-      name: "Nike Air Max",
-      price: 129.9,
-      image: "/product1.png",
-      description: "Premium quality shoes perfect for sports and casual wear.",
-    },
-    {
-      id: 2,
-      name: "Adidas Superstar Cap",
-      price: 29.9,
-      image: "/product2.png",
-      description: "Stylish cap to match your streetwear.",
-    },
-    {
-      id: 3,
-      name: "Puma Yellow T-Shirt",
-      price: 49.9,
-      image: "/product3.png",
-      description: "Soft cotton t-shirt for all-day comfort.",
-    },
-    {
-      id: 4,
-      name: "Nike Blazer",
-      price: 129.9,
-      image: "/product4.jpg",
-      description: "Classic Nike Blazer sneakers.",
-    },
-    {
-      id: 5,
-      name: "Titans Smart Watch",
-      price: 29.9,
-      image: "/product5.jpg",
-      description: "Smartwatch with fitness tracking.",
-    },
-    {
-      id: 6,
-      name: "Adidas Superstar Hat",
-      price: 49.9,
-      image: "/product6.jpg",
-      description: "Trendy Nike hat for everyday use.",
-    },
-    {
-      id: 7,
-      name: "Adidas Jacket",
-      price: 129.9,
-      image: "/product7.jpg",
-      description: "Warm & stylish Adidas jacket.",
-    },
-    {
-      id: 8,
-      name: "Adidas Sport Shoe",
-      price: 29.9,
-      image: "/product8.jpg",
-      description: "Premium quality shoes perfect for sports and casual wear.",
-    },
-    {
-      id: 9,
-      name: "Adidas Sunglass",
-      price: 49.9,
-      image: "/product9.jpg",
-      description: "UV protected sunglasses with style",
-    },
-    {
-      id: 10,
-      name: "Dennim Trouser",
-      price: 49.9,
-      image: "/product10.jpg",
-      description: "Comfort-fit trousers for casual & workout.",
-    },
-  ];
-
-  const deals = cart.slice(0, 4); // first 3 as deals
-  const otherProducts = cart.slice(4);
+  const deals = products.slice(0, 4);
+  const otherProducts = products.slice(4);
 
   return (
     <div className="px-6 lg:px-16 mt-16">
@@ -114,7 +43,7 @@ function Page() {
                     <h2 className="text-lg font-bold text-gray-800 text-center">
                       ${item.price.toFixed(2)}
                     </h2>
-                    <buttton
+                    <button
                       className="flex items-center gap-1 bg-green-100 hover:bg-green-200 rounded-md p-1 cursor-pointer"
                       onClick={() => addToCart(item)}
                     >
@@ -122,7 +51,7 @@ function Page() {
                       <span className="text-sm text-green-600 font-bold">
                         Add to cart
                       </span>
-                    </buttton>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -130,6 +59,13 @@ function Page() {
           </div>
         </div>
       </div>
+
+      {products.length === 0 && (
+        <p className="mt-8 text-gray-600">
+          No products found. Add products from admin.
+        </p>
+      )}
+
       {/* All Products */}
       <div className="mt-10">
         <h2 className="text-2xl font-bold mb-6">🛍️ All Products</h2>

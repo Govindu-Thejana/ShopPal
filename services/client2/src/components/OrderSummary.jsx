@@ -3,11 +3,16 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import { toast } from "react-toastify";
 
-const OrderSummary = ({ total }) => {
+const OrderSummary = ({ total, hasItems = true }) => {
   const router = useRouter();
 
   const handlePlaceOrder = () => {
-    toast.success(`Your order has been placed successfully!`)
+    if (!hasItems) {
+      toast.warning("Add products to cart before placing an order.");
+      return;
+    }
+
+    toast.success(`Your order has been placed successfully!`);
     router.push(`/checkout?total=${total}`);
   };
 

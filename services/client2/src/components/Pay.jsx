@@ -92,8 +92,9 @@ import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { LaptopMinimalCheck, Loader2, ShoppingCart } from "lucide-react";
 import Image from "next/image";
+import { toast } from "react-toastify";
 
-const Pay = ({ cart }) => {
+const Pay = ({ cart, onPaymentSuccess }) => {
   // Get username from localStorage
   const username =
     typeof window !== "undefined"
@@ -116,7 +117,21 @@ const Pay = ({ cart }) => {
       const duration = (endTime - startTime) / 1000;
       return { ...response, duration };
     },
+    onSuccess: () => {
+      if (onPaymentSuccess) {
+        onPaymentSuccess();
+      }
+    },
   });
+
+  const handleCheckout = () => {
+    if (!cart?.length) {
+      toast.warning("Your cart is empty.");
+      return;
+    }
+
+    mutate({ cart, username });
+  };
 
   return (
     <div className="bg-red-50 flex flex-col items-center justify-center gap-4 py-8 rounded-xl">
@@ -158,7 +173,7 @@ const Pay = ({ cart }) => {
         <button
           disabled={isPending}
           className="bg-black px-5 py-3 text-white rounded-full flex items-center gap-4 w-max cursor-pointer hover:bg-gray-700 transition-all duration-300 disabled:cursor-not-allowed"
-          onClick={() => mutate({ cart, username })}
+          onClick={handleCheckout}
         >
           <span className="tracking-wider text-sm">CHECKOUT</span>
           {isPending ? (

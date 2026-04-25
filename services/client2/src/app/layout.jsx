@@ -5,8 +5,7 @@ import "./globals.css";
 import { ToastContainer } from "react-toastify";
 
 import { CartProvider } from "../context/CartContext";
-
-
+import { ProductProvider } from "../context/ProductContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,22 +25,24 @@ export default function RootLayout({ children }) {
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased max-w-[1920px] mx-auto px-16 lg:px-0`}
         >
-          <CartProvider>
-            {children}
-            {/* Toast notifications */}
-            <ToastContainer
-              position="top-right"
-              autoClose={3000}
-              hideProgressBar={false}
-              newestOnTop={false}
-              closeOnClick
-              rtl={false}
-              pauseOnFocusLoss
-              draggable
-              pauseOnHover
-              theme="colored"
-            />
-          </CartProvider>
+          <ProductProvider>
+            <CartProvider>
+              {children}
+              {/* Toast notifications */}
+              <ToastContainer
+                position="top-right"
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored"
+              />
+            </CartProvider>
+          </ProductProvider>
         </body>
       </QueryClientProvider>
     </html>

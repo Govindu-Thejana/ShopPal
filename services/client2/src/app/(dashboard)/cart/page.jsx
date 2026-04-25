@@ -30,9 +30,9 @@ export default function CartPage() {
           ) : (
             <>
               <div className="grid grid-cols-2 gap-16 w-full">
-                {cart.map((item, index) => (
+                {cart.map((item) => (
                   <div
-                    key={index}
+                    key={item.id}
                     className="flex flex-col gap-4 border border-amber-400 rounded-[8px] items-center text-center"
                   >
                     <Image
@@ -67,7 +67,7 @@ export default function CartPage() {
           )}
         </div>
         <div className="w-full lg:w-1/3 pt-20 ">
-          <OrderSummary total={total} />
+          <OrderSummary total={total} hasItems={cart.length > 0} />
         </div>
       </div>
     </div>
