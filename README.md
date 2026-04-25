@@ -65,7 +65,53 @@ List topics:
 docker exec kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
 ```
 
+<<<<<<< HEAD
 ## 3) Configure Email Service Env
+=======
+### 5. API Gateway (Nginx)
+
+A local Nginx API gateway is provided at `services/gateway`.
+
+```bash path=null start=null
+cd services/gateway
+docker compose up -d
+```
+
+Gateway base URL:
+
+```text
+http://localhost:8088
+```
+
+Gateway routes:
+
+- `GET /gateway/health` -> gateway health
+- `GET|POST /api/auth/*` -> login-service (`localhost:7070`)
+- `GET|POST /api/payments/*` -> payment-service (`localhost:8000`)
+- `GET /api/analytics/*` -> analytic-service (`localhost:8001`)
+
+Examples:
+
+```bash path=null start=null
+# health
+curl http://localhost:8088/gateway/health
+
+# auth login
+curl -X POST http://localhost:8088/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"nisal","password":"123456"}'
+
+# payment
+curl -X POST http://localhost:8088/api/payments/payment-service \
+  -H "Content-Type: application/json" \
+  -d '{"username":"nisal","cart":[{"id":1,"name":"Item","price":10.5}]}'
+
+# analytics summary
+curl http://localhost:8088/api/analytics/dashboard/summary
+```
+
+## 🛠️ Development Setup
+>>>>>>> d4b4811181c02170531d9ecc36533f5963e49416
 
 Create/update `services/email-service/.env`:
 

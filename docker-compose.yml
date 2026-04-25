@@ -1,0 +1,153 @@
+services:
+  kafka:
+    image: apache/kafka:3.8.0
+    container_name: shopmate-kafka
+    hostname: kafka
+    ports:
+      - "9094:9094"
+    environment:
+      - KAFKA_NODE_ID=1
+      - KAFKA_PROCESS_ROLES=broker,controller
+      - KAFKA_LISTENERS=PLAINTEXT://kafka:9092,CONTROLLER://kafka:9093,EXTERNAL://0.0.0.0:9094
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
+      - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 20s
+      retries: 30
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: shopmate-kafka-ui
+    ports:
+      - "9090:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local-cluster
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+      - KAFKA_CLUSTERS_0_READONLY=false
+      - KAFKA_CLUSTERS_0_TOPIC_AUTO_CREATE=true
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  login-service:
+    build:
+      context: ./services/login-service
+    container_name: shopmate-login-service
+    ports:
+      - "7070:7070"
+    environment:
+      NODE_ENV: production
+      KAFKA_BROKERS: kafka:9092
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  payment-service:
+    build:
+      context: ./services/payment-service
+    container_name: shopmate-payment-service
+    ports:
+      - "8000:8000"
+    environment:
+      NODE_ENV: production
+      KAFKA_BROKERS: kafka:9092
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  order-service:
+    build:
+      context: ./services/order-service
+    container_name: shopmate-order-service
+    environment:
+      NODE_ENV: production
+      KAFKA_BROKERS: kafka:9092
+      MONGO_URI: ${MONGO_URI:-mongodb+srv://nisalmicro:micro1234@microcluster.w872zhn.mongodb.net/?retryWrites=true&w=majority&appName=microcluster}
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  analytic-service:
+    build:
+      context: ./services/analytic-service
+    container_name: shopmate-analytic-service
+    ports:
+      - "8001:8001"
+    environment:
+      NODE_ENV: production
+      KAFKA_BROKERS: kafka:9092
+      PORT: 8001
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  email-service:
+    build:
+      context: ./services/email-service
+    container_name: shopmate-email-service
+    environment:
+      NODE_ENV: production
+      KAFKA_BROKERS: kafka:9092
+    env_file:
+      - ./services/email-service/.env
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  api-gateway:
+    image: nginx:1.27-alpine
+    container_name: shopmate-api-gateway
+    ports:
+      - "8088:80"
+    volumes:
+      - ./services/gateway/nginx.docker.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - login-service
+      - payment-service
+      - analytic-service
+
+  client:
+    build:
+      context: ./services/client
+      args:
+        NEXT_PUBLIC_API_GATEWAY: http://localhost:8088
+    container_name: shopmate-client
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      NEXT_PUBLIC_API_GATEWAY: http://localhost:8088
+    depends_on:
+      - api-gateway
+
+  client2:
+    build:
+      context: ./services/client2
+      args:
+        NEXT_PUBLIC_API_GATEWAY: http://localhost:8088
+    container_name: shopmate-client2
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      HOSTNAME: 0.0.0.0
+      NEXT_PUBLIC_API_GATEWAY: http://localhost:8088
+    depends_on:
+      - api-gateway
+
+volumes:
+  kafka-data:

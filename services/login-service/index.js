@@ -18,12 +18,13 @@ const corsConfig = {
     // allow non-browser clients with no Origin (curl, Postman)
     if (!origin) return cb(null, true);
     if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    if (/^http:\/\/localhost:\d+$/.test(origin)) return cb(null, true);
     return cb(new Error("Not allowed by CORS"));
   },
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Accept"],
-  credentials: true,        // set to true if your frontend sends cookies/credentials
-  maxAge: 86400,            // cache preflight
+  credentials: true, // set to true if your frontend sends cookies/credentials
+  maxAge: 86400, // cache preflight
 };
 
 app.use(cors(corsConfig));
@@ -33,8 +34,12 @@ app.options(/.*/, cors(corsConfig));
 app.use(express.json());
 
 /* ------------- Kafka ------------- */
-const kafka = new Kafka({ clientId: "login-service", brokers: [process.env.KAFKA_BROKERS || "kafka:9092"] });
+const kafka = new Kafka({
+  clientId: "login-service",
+  brokers: [process.env.KAFKA_BROKERS || (process.env.NODE_ENV === "production" ? "kafka:9092" : "localhost:9094")],
+});
 const producer = kafka.producer();
+let kafkaReady = false;
 
 /* ------------- JWT ------------- */
 const SECRET_KEY = "supersecretkey";
@@ -49,6 +54,9 @@ const users = [
 
 /* ------------- Health ------------- */
 app.get("/", (_req, res) => res.json({ ok: true }));
+app.get("/health", (_req, res) => {
+  res.json({ ok: true, service: "login-service", kafkaReady });
+});
 
 /* ------------- SIGNUP ------------- */
 app.post("/signup", async (req, res) => {
@@ -61,11 +69,7 @@ app.post("/signup", async (req, res) => {
   const newUser = { id: users.length + 1, username, password, role: role || "user" };
   users.push(newUser);
 
-  const token = jwt.sign(
-      { id: newUser.id, username: newUser.username, role: newUser.role },
-      SECRET_KEY,
-      { expiresIn: "1h" }
-  );
+  const token = jwt.sign({ id: newUser.id, username: newUser.username, role: newUser.role }, SECRET_KEY, { expiresIn: "1h" });
 
   try {
     await producer.send({
@@ -88,16 +92,10 @@ app.post("/signup", async (req, res) => {
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
-  const user = users.find(
-      (u) => u.username === username && u.password === password
-  );
+  const user = users.find((u) => u.username === username && u.password === password);
   if (!user) return res.status(401).json({ message: "Invalid credentials" });
 
-  const token = jwt.sign(
-      { id: user.id, username: user.username, role: user.role },
-      SECRET_KEY,
-      { expiresIn: "1h" }
-  );
+  const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, SECRET_KEY, { expiresIn: "1h" });
 
   try {
     await producer.send({
@@ -119,8 +117,10 @@ app.post("/login", async (req, res) => {
 app.listen(7070, async () => {
   try {
     await producer.connect();
-    console.log("✅ Auth service (login + signup) running on port 7000");
+    kafkaReady = true;
+    console.log("✅ Auth service (login + signup) running on port 7070");
   } catch (err) {
+    kafkaReady = false;
     console.error("❌ Failed to connect Kafka producer at startup:", err);
   }
 });

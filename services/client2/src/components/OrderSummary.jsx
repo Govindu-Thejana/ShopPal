@@ -7,12 +7,15 @@ const OrderSummary = ({ total, hasItems = true }) => {
   const router = useRouter();
 
   const handlePlaceOrder = () => {
+<<<<<<< HEAD
     if (!hasItems) {
       toast.warning("Add products to cart before placing an order.");
       return;
     }
 
     toast.success(`Your order has been placed successfully!`);
+=======
+>>>>>>> d4b4811181c02170531d9ecc36533f5963e49416
     router.push(`/checkout?total=${total}`);
   };
 

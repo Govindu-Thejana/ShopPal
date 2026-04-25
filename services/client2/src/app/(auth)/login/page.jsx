@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
+const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY || "http://localhost:8088";
+
 export default function Home() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -22,7 +24,7 @@ export default function Home() {
     setLoading(true);
     setError("");
     try {
-      const response = await axios.post("http://localhost:7070/login", {
+      const response = await axios.post(`${API_GATEWAY}/api/auth/login`, {
         username,
         password,
       });

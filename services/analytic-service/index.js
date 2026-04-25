@@ -11,17 +11,18 @@ app.use(
       return cb(null, false);
     },
     credentials: true,
-  })
+  }),
 );
 app.use(express.json());
 const PORT = process.env.PORT || 8001;
 
 const kafka = new Kafka({
   clientId: "analytic-service",
-  brokers: [process.env.KAFKA_BROKERS || "kafka:9092"],
+  brokers: [process.env.KAFKA_BROKERS || (process.env.NODE_ENV === "production" ? "kafka:9092" : "localhost:9094")],
 });
 
 const consumer = kafka.consumer({ groupId: "analytic-service" });
+let consumerReady = false;
 
 // Stats and recent events storage
 let totals = {
@@ -37,6 +38,7 @@ const recentEmails = [];
 
 const runKafkaConsumer = async () => {
   await consumer.connect();
+  consumerReady = true;
   await consumer.subscribe({
     topics: ["payment-successful", "order-successful", "email-successful"],
     fromBeginning: true,
@@ -57,9 +59,7 @@ const runKafkaConsumer = async () => {
           recentPayments.unshift({ userId, total });
           if (recentPayments.length > MAX_RECENT) recentPayments.pop();
 
-          console.log(
-            `Analytic consumer ${userId} made a payment of $${total.toFixed(2)}`
-          );
+          console.log(`Analytic consumer ${userId} made a payment of $${total.toFixed(2)}`);
           break;
         }
         case "order-successful": {
@@ -70,9 +70,7 @@ const runKafkaConsumer = async () => {
           recentOrders.unshift({ userId, orderId });
           if (recentOrders.length > MAX_RECENT) recentOrders.pop();
 
-          console.log(
-            `Analytic consumer order created for user ${userId} with order ID ${orderId}`
-          );
+          console.log(`Analytic consumer order created for user ${userId} with order ID ${orderId}`);
           break;
         }
         case "email-successful": {
@@ -83,9 +81,7 @@ const runKafkaConsumer = async () => {
           recentEmails.unshift({ userId, emailId });
           if (recentEmails.length > MAX_RECENT) recentEmails.pop();
 
-          console.log(
-            `Analytic consumer email sent to user ${userId} with email ID ${emailId}`
-          );
+          console.log(`Analytic consumer email sent to user ${userId} with email ID ${emailId}`);
           break;
         }
         default:
@@ -96,6 +92,14 @@ const runKafkaConsumer = async () => {
 };
 
 // Dashboard API routes
+app.get("/", (_req, res) => {
+  res.json({ ok: true });
+});
+
+app.get("/health", (_req, res) => {
+  res.json({ ok: true, service: "analytic-service", consumerReady });
+});
+
 app.get("/dashboard/summary", (req, res) => {
   res.json({
     totalPayments: totals.payments,
@@ -119,6 +123,7 @@ app.get("/dashboard/recent-emails", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Analytic service running on port ${PORT}`);
   runKafkaConsumer().catch((err) => {
+    consumerReady = false;
     console.error("Error running Kafka consumer:", err);
   });
 });
