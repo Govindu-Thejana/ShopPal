@@ -37,24 +37,38 @@ jobs:
             "commands": [
               "set -e",
 
-              "export PATH=$PATH:/usr/bin:/usr/local/bin",
+              "echo '=== Installing dependencies ==='",
+
+              "if command -v apt >/dev/null 2>&1; then",
+              "  sudo apt update -y",
+              "  sudo apt install -y git curl unzip",
+              "elif command -v yum >/dev/null 2>&1; then",
+              "  sudo yum install -y git curl unzip",
+              "fi",
 
               "echo 'Checking git...'",
-              "which git || (echo 'Git missing' && exit 1)",
+              "git --version",
 
-              "mkdir -p /opt/shopmate",
+              "echo 'Setting PATH...'",
+              "export PATH=$PATH:/usr/bin:/usr/local/bin",
 
+              "echo 'Preparing directory...'",
+              "sudo mkdir -p /opt/shopmate",
+
+              "echo 'Cloning/updating repo...'",
               "if [ ! -d /opt/shopmate/.git ]; then",
-              "  git clone https://github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
+              "  sudo git clone https://github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
               "else",
-              "  cd /opt/shopmate && git pull origin main",
+              "  cd /opt/shopmate && sudo git pull origin main",
               "fi",
 
               "cd /opt/shopmate",
 
-              "chmod +x deploy/aws/deploy.sh deploy/aws/write-env.sh",
+              "echo 'Fixing permissions...'",
+              "sudo chmod +x deploy/aws/deploy.sh deploy/aws/write-env.sh",
 
-              "./deploy/aws/deploy.sh"
+              "echo 'Running deployment script...'",
+              "sudo ./deploy/aws/deploy.sh"
             ]
           }
           JSON
