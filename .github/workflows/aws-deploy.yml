@@ -1,4 +1,4 @@
-name: Deploy ShopMate To AWS
+name: Deploy ShopMate Microservices To AWS
 
 on:
   push:
@@ -31,18 +31,23 @@ jobs:
           role-to-assume: arn:aws:iam::055679187407:role/AWS_GITHUB_ACTIONS_ROLE
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Deploy via SSM
+      - name: Deploy to EC2 via SSM
         run: |
           set -e
 
           PARAMS='{
             "commands": [
-              "set -e",
-              "echo === Preparing server ===",
 
-              "echo Checking git...",
-              "if ! command -v git >/dev/null 2>&1; then sudo yum install -y git unzip; fi",
-              "git --version",
+              "set -e",
+
+              "echo === Starting Deployment ===",
+
+              "echo Installing dependencies...",
+              "sudo yum install -y git docker docker-compose",
+              "sudo service docker start",
+
+              "echo Adding ec2-user to docker group...",
+              "sudo usermod -aG docker ec2-user || true",
 
               "echo Cleaning old deployment...",
               "sudo rm -rf /opt/shopmate",
@@ -53,29 +58,29 @@ jobs:
 
               "cd /opt/shopmate",
 
-              "echo Listing files...",
+              "echo Repo structure:",
               "ls -la",
 
-              "chmod +x deploy/aws/deploy.sh deploy/aws/write-env.sh || true",
+              "echo Using production docker compose...",
+              "docker-compose -f docker-compose.prod.yml down || true",
 
-              "echo Running deployment...",
-              "ls -la",
-              "chmod +x deploy.sh write-env.sh || true",
-              "./deploy.sh"
+              "docker-compose -f docker-compose.prod.yml up -d --build",
+
+              "echo Deployment completed successfully"
             ]
           }'
 
           COMMAND_ID=$(aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --targets "Key=tag:App,Values=shopmate" "Key=tag:Environment,Values=prod" \
-            --comment "Deploy ShopMate" \
+            --comment "Deploy ShopMate Microservices" \
             --parameters "$PARAMS" \
             --query "Command.CommandId" \
             --output text)
 
           echo "Command ID: $COMMAND_ID"
 
-          sleep 20
+          sleep 25
 
           aws ssm list-command-invocations \
             --command-id "$COMMAND_ID" \
