@@ -12,9 +12,6 @@ permissions:
 
 env:
   AWS_REGION: ap-south-1
-  APP_NAME: shopmate
-  APP_ENV: prod
-  GITHUB_BRANCH: main
   GH_PAT: ${{ secrets.GH_PAT }}
 
 jobs:
@@ -22,10 +19,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
+      - name: Configure AWS
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::055679187407:role/AWS_GITHUB_ACTIONS_ROLE
@@ -35,45 +32,50 @@ jobs:
         run: |
           set -e
 
+          cat > ssm.json <<EOF
+{
+  "commands": [
+    "set -e",
+
+    "echo === Installing Docker ===",
+    "sudo yum update -y",
+    "sudo yum install -y git docker",
+
+    "sudo systemctl start docker",
+    "sudo systemctl enable docker",
+
+    "mkdir -p ~/.docker/cli-plugins",
+    "curl -SL https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose",
+    "chmod +x ~/.docker/cli-plugins/docker-compose",
+
+    "echo === Cleaning old deployment ===",
+    "sudo rm -rf /opt/shopmate",
+
+    "echo === Cloning repo ===",
+    "git clone https://x-access-token:${GH_PAT}@github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
+
+    "cd /opt/shopmate",
+
+    "ls -la",
+
+    "echo === Deploying containers ===",
+    "docker compose -f docker-compose.prod.yml down || true",
+    "docker compose -f docker-compose.prod.yml up -d --build",
+
+    "echo === DONE ==="
+  ]
+}
+EOF
+
           COMMAND_ID=$(aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --targets "Key=tag:App,Values=shopmate" "Key=tag:Environment,Values=prod" \
-            --comment "Deploy ShopMate Microservices" \
-            --parameters '{
-              "commands": [
-                "set -e",
-
-                "echo === Installing Docker ===",
-                "sudo yum update -y",
-                "sudo yum install -y git docker",
-
-                "mkdir -p ~/.docker/cli-plugins",
-                "curl -SL https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose",
-                "chmod +x ~/.docker/cli-plugins/docker-compose",
-
-                "sudo systemctl start docker",
-                "sudo systemctl enable docker",
-
-                "sudo rm -rf /opt/shopmate",
-                "git clone https://x-access-token:'${GH_PAT}'@github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
-
-                "cd /opt/shopmate",
-
-                "echo 'Repo structure:'",
-                "ls -la",
-
-                "docker compose -f docker-compose.prod.yml down || true",
-                "docker compose -f docker-compose.prod.yml up -d --build",
-
-                "echo Deployment completed"
-              ]
-            }' \
+            --comment "ShopMate Deploy" \
+            --parameters file://ssm.json \
             --query "Command.CommandId" \
             --output text)
 
           echo "Command ID: $COMMAND_ID"
-
-          sleep 25
 
           aws ssm list-command-invocations \
             --command-id "$COMMAND_ID" \
