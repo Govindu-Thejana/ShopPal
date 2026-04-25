@@ -1,69 +1,98 @@
-- name: Deploy to EC2 via SSM
-  run: |
-    set -e
+name: Deploy ShopMate To AWS
 
-    cat > ssm.json <<'EOF'
-{
-  "commands": [
-    "set -e",
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
-    "echo '=== Installing Docker ==='",
-    "sudo yum update -y",
-    "sudo yum install -y git docker",
-    "sudo systemctl start docker",
-    "sudo usermod -aG docker ec2-user || true",
+permissions:
+  id-token: write
+  contents: read
 
-    "echo '=== Installing Docker Compose v2 ==='",
-    "DOCKER_CONFIG=${DOCKER_CONFIG:-/usr/libexec/docker}",
-    "sudo mkdir -p $DOCKER_CONFIG/cli-plugins",
-    "sudo curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o $DOCKER_CONFIG/cli-plugins/docker-compose",
-    "sudo chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose",
+env:
+  AWS_REGION: ap-south-1
+  GH_PAT: ${{ secrets.GH_PAT }}
 
-    "echo '=== Deploying App ==='",
-    "sudo rm -rf /opt/shopmate",
-    "sudo git clone https://x-access-token:${GH_PAT}@github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
 
-    "cd /opt/shopmate",
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    "echo '=== Running Docker Compose ==='",
-    "docker compose -f docker-compose.prod.yml down || true",
-    "docker compose -f docker-compose.prod.yml up -d --build",
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::055679187407:role/AWS_GITHUB_ACTIONS_ROLE
+          aws-region: ${{ env.AWS_REGION }}
 
-    "echo '=== Deployment Complete ==='"
-  ]
-}
-EOF
+      - name: Deploy via SSM
+        run: |
+          set -e
 
-    COMMAND_ID=$(aws ssm send-command \
-      --document-name "AWS-RunShellScript" \
-      --instance-ids i-050b3842d0927cb0a \
-      --comment "ShopMate Deploy" \
-      --parameters file://ssm.json \
-      --query "Command.CommandId" \
-      --output text)
+          cat <<'EOF' > ssm.json
+          {
+            "commands": [
+              "set -e",
 
-    echo "Command ID: $COMMAND_ID"
+              "echo '=== Installing Docker ==='",
+              "sudo yum update -y",
+              "sudo yum install -y git docker",
+              "sudo systemctl start docker",
+              "sudo usermod -aG docker ec2-user || true",
 
-    echo "Waiting for deployment..."
+              "echo '=== Installing Docker Compose v2 ==='",
+              "DOCKER_CONFIG=${DOCKER_CONFIG:-/usr/libexec/docker}",
+              "sudo mkdir -p $DOCKER_CONFIG/cli-plugins",
+              "sudo curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o $DOCKER_CONFIG/cli-plugins/docker-compose",
+              "sudo chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose",
 
-    for i in {1..30}; do
-      STATUS=$(aws ssm list-command-invocations \
-        --command-id "$COMMAND_ID" \
-        --query "CommandInvocations[0].Status" \
-        --output text)
+              "echo '=== Deploying App ==='",
+              "sudo rm -rf /opt/shopmate",
+              "sudo git clone https://x-access-token:${GH_PAT}@github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
 
-      echo "Status: $STATUS"
+              "cd /opt/shopmate",
 
-      if [ "$STATUS" = "Success" ]; then
-        echo "Deployment succeeded"
-        break
-      elif [ "$STATUS" = "Failed" ]; then
-        echo "Deployment failed"
-        aws ssm list-command-invocations \
-          --command-id "$COMMAND_ID" \
-          --details
-        exit 1
-      fi
+              "echo '=== Running Docker Compose ==='",
+              "docker compose -f docker-compose.prod.yml down || true",
+              "docker compose -f docker-compose.prod.yml up -d --build",
 
-      sleep 10
-    done
+              "echo '=== Deployment Complete ==='"
+            ]
+          }
+          EOF
+
+          COMMAND_ID=$(aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --instance-ids i-050b3842d0927cb0a \
+            --comment "ShopMate Deploy" \
+            --parameters file://ssm.json \
+            --query "Command.CommandId" \
+            --output text)
+
+          echo "Command ID: $COMMAND_ID"
+          echo "Waiting for deployment..."
+
+          for i in {1..30}; do
+            STATUS=$(aws ssm list-command-invocations \
+              --command-id "$COMMAND_ID" \
+              --query "CommandInvocations[0].Status" \
+              --output text)
+
+            echo "Status: $STATUS"
+
+            if [ "$STATUS" = "Success" ]; then
+              echo "Deployment succeeded"
+              break
+            elif [ "$STATUS" = "Failed" ]; then
+              echo "Deployment failed"
+              aws ssm list-command-invocations \
+                --command-id "$COMMAND_ID" \
+                --details
+              exit 1
+            fi
+
+            sleep 10
+          done
