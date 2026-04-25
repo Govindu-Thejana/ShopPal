@@ -23,9 +23,7 @@ const emailTo = (process.env.EMAIL_TO || emailUser || "").trim();
 
 const validateEmailConfig = () => {
   if (!emailUser || !emailPass) {
-    throw new Error(
-      "Missing EMAIL_USER or EMAIL_PASS in services/email-service/.env"
-    );
+    throw new Error("Missing EMAIL_USER or EMAIL_PASS in services/email-service/.env");
   }
 };
 
@@ -47,7 +45,7 @@ const run = async () => {
 
   await consumer.run({
     eachMessage: async ({ message }) => {
-      const { userId, username, orderId, cart = [] } = JSON.parse(message.value.toString());
+      const { userId, orderId, cart = [] } = JSON.parse(message.value.toString());
 
       // Map your cart to items (name/qty/price). Adjust as needed.
       const items = cart.map((c) => ({
@@ -62,7 +60,7 @@ const run = async () => {
       const total = +(subtotal + shipping + tax).toFixed(2);
 
       const { subject, html, text } = buildOrderEmail({
-        userName: username || `User ${userId}`,
+        userName: `User ${userId}`,
         orderId,
         items,
         subtotal,
@@ -72,7 +70,7 @@ const run = async () => {
         deliveryEta: "Aug 29 – Sep 19",
         supportEmail: emailUser,
         address: {
-          name: username || `User ${userId}`,
+          name: `User ${userId}`,
           line1: "123 Market St",
           city: "Colombo",
           state: "WP",
@@ -98,7 +96,6 @@ const run = async () => {
       };
 
       try {
-        console.log(`📧 Preparing order email for order ${orderId} with ${items.length} item(s)`);
         const info = await transporter.sendMail(mailOptions);
         console.log("✅ Email sent:", info.messageId);
         await producer.send({

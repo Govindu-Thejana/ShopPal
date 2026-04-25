@@ -52,7 +52,7 @@ const run = async () => {
 
     await consumer.run({
       eachMessage: async ({ topic, partition, message }) => {
-        const { userId, username, cart = [] } = JSON.parse(message.value.toString());
+        const { userId, cart } = JSON.parse(message.value.toString());
 
         // Create order in DB
         const dummyOrderId = Math.floor(Math.random() * 1000);
@@ -68,9 +68,7 @@ const run = async () => {
             {
               value: JSON.stringify({
                 userId,
-                username,
                 orderId: dummyOrderId,
-                cart,
               }),
             },
           ],

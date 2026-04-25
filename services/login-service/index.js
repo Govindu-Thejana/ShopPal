@@ -66,16 +66,7 @@ app.post("/signup", async (req, res) => {
     return res.status(400).json({ message: "User already exists" });
   }
 
-  if (role === "admin") {
-    return res.status(403).json({
-      message: "Admin role cannot be assigned via signup",
-    });
-  }
-
-  const allowedRoles = new Set(["user", "seller"]);
-  const safeRole = allowedRoles.has(role) ? role : "user";
-
-  const newUser = { id: users.length + 1, username, password, role: safeRole };
+  const newUser = { id: users.length + 1, username, password, role: role || "user" };
   users.push(newUser);
 
   const token = jwt.sign({ id: newUser.id, username: newUser.username, role: newUser.role }, SECRET_KEY, { expiresIn: "1h" });
