@@ -32,50 +32,48 @@ jobs:
         run: |
           set -e
 
-          cat > ssm.json <<EOF
-{
-  "commands": [
-    "set -e",
-
-    "echo === Installing Docker ===",
-    "sudo yum update -y",
-    "sudo yum install -y git docker",
-
-    "sudo systemctl start docker",
-    "sudo systemctl enable docker",
-
-    "mkdir -p ~/.docker/cli-plugins",
-    "curl -SL https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose",
-    "chmod +x ~/.docker/cli-plugins/docker-compose",
-
-    "echo === Cleaning old deployment ===",
-    "sudo rm -rf /opt/shopmate",
-
-    "echo === Cloning repo ===",
-    "git clone https://x-access-token:${GH_PAT}@github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
-
-    "cd /opt/shopmate",
-
-    "ls -la",
-
-    "echo === Deploying containers ===",
-    "docker compose -f docker-compose.prod.yml down || true",
-    "docker compose -f docker-compose.prod.yml up -d --build",
-
-    "echo === DONE ==="
-  ]
-}
-EOF
-
           COMMAND_ID=$(aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --targets "Key=tag:App,Values=shopmate" "Key=tag:Environment,Values=prod" \
             --comment "ShopMate Deploy" \
-            --parameters file://ssm.json \
+            --parameters '{
+              "commands": [
+                "set -e",
+
+                "echo === Installing Docker ===",
+                "sudo yum update -y",
+                "sudo yum install -y git docker",
+
+                "sudo systemctl start docker",
+                "sudo systemctl enable docker",
+
+                "mkdir -p ~/.docker/cli-plugins",
+                "curl -SL https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose",
+                "chmod +x ~/.docker/cli-plugins/docker-compose",
+
+                "echo === Cleaning old deployment ===",
+                "sudo rm -rf /opt/shopmate",
+
+                "echo === Cloning repo ===",
+                "git clone https://x-access-token:${GH_PAT}@github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
+
+                "cd /opt/shopmate",
+
+                "ls -la",
+
+                "echo === Deploying ===",
+                "docker compose -f docker-compose.prod.yml down || true",
+                "docker compose -f docker-compose.prod.yml up -d --build",
+
+                "echo === DONE ==="
+              ]
+            }' \
             --query "Command.CommandId" \
             --output text)
 
           echo "Command ID: $COMMAND_ID"
+
+          sleep 20
 
           aws ssm list-command-invocations \
             --command-id "$COMMAND_ID" \
