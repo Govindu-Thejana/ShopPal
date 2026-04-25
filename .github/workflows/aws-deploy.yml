@@ -59,7 +59,9 @@ jobs:
               "chmod +x deploy/aws/deploy.sh deploy/aws/write-env.sh || true",
 
               "echo Running deployment...",
-              "./deploy/aws/deploy.sh"
+              "ls -la",
+              "chmod +x deploy.sh write-env.sh || true",
+              "./deploy.sh"
             ]
           }'
 
