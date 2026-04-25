@@ -1,0 +1,62 @@
+name: Deploy ShopMate To AWS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ap-south-1
+  APP_NAME: shopmate
+  APP_ENV: prod
+  GITHUB_BRANCH: main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::055679187407:role/AWS_GITHUB_ACTIONS_ROLE
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy to EC2 instances via SSM
+        run: |
+          PARAMS=$(cat <<'JSON'
+          {
+            "commands": [
+              "cd /opt/shopmate",
+              "git fetch origin main",
+              "git checkout -B main origin/main",
+              "chmod +x deploy/aws/deploy.sh deploy/aws/write-env.sh",
+              "APP_NAME=shopmate APP_ENV=prod GITHUB_BRANCH=main APP_DIR=/opt/shopmate ./deploy/aws/deploy.sh"
+            ]
+          }
+          JSON
+          )
+
+          COMMAND_ID=$(aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --targets "Key=tag:App,Values=shopmate" "Key=tag:Environment,Values=prod" \
+            --comment "Deploy ShopMate from GitHub Actions" \
+            --parameters "${PARAMS}" \
+            --query "Command.CommandId" \
+            --output text)
+
+          echo "Command ID: ${COMMAND_ID}"
+
+          sleep 20
+
+          aws ssm list-command-invocations \
+            --command-id "${COMMAND_ID}" \
+            --details
