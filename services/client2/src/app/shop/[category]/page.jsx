@@ -3,13 +3,14 @@
 import { Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useContext } from "react";
+import { use, useContext } from "react";
 
 import { CartContext } from "../../../context/CartContext";
 import { ProductContext } from "../../../context/ProductContext";
 
 export default function CategoryPage({ params }) {
-  const category = params?.category?.toLowerCase();
+  const resolvedParams = use(params);
+  const category = resolvedParams?.category?.toLowerCase();
   const { addToCart } = useContext(CartContext);
   const { products } = useContext(ProductContext);
 
