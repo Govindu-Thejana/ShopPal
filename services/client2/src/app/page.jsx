@@ -9,6 +9,7 @@ import {
   Compass,
   Plus,
   RefreshCcw,
+  ShoppingBag,
   Sparkles,
   Truck,
 } from "lucide-react";
@@ -18,7 +19,7 @@ import { CartContext } from "../context/CartContext";
 
 export default function LandingPage() {
   const { products } = useContext(ProductContext);
-  const { addToCart } = useContext(CartContext);
+  const { addToCart, cart } = useContext(CartContext);
 
   const categories = [
     { name: "Men", img: "/men.jpg", href: "/shop/men" },
@@ -37,7 +38,10 @@ export default function LandingPage() {
 
       <header className="sticky top-0 z-50 border-b border-zinc-200/60 bg-[#f8f6ef]/85 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-[1280px] items-center justify-between px-5 py-4 md:px-10">
-          <Link href="/" className="text-2xl font-black tracking-tight text-zinc-900">
+          <Link
+            href="/"
+            className="text-2xl font-black tracking-tight text-zinc-900"
+          >
             ShopPal
           </Link>
           <nav className="hidden items-center gap-7 text-sm font-semibold text-zinc-600 md:flex">
@@ -55,6 +59,18 @@ export default function LandingPage() {
             </Link>
           </nav>
           <div className="flex items-center gap-3">
+            <Link
+              href="/cart"
+              className="relative inline-flex items-center gap-2 rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:border-zinc-400"
+            >
+              <ShoppingBag className="h-4 w-4" />
+              Cart
+              {cart.length > 0 && (
+                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-zinc-900 px-1.5 text-xs font-bold text-white">
+                  {cart.length}
+                </span>
+              )}
+            </Link>
             <Link
               href="/login"
               className="rounded-full border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:border-zinc-400 hover:bg-white"
@@ -137,7 +153,9 @@ export default function LandingPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
                 New Drop
               </p>
-              <p className="text-lg font-black text-zinc-900">Spring Studio 26</p>
+              <p className="text-lg font-black text-zinc-900">
+                Spring Studio 26
+              </p>
             </div>
           </div>
         </div>
@@ -223,7 +241,9 @@ export default function LandingPage() {
                 <h3 className="line-clamp-1 text-lg font-black text-zinc-900">
                   {item.name}
                 </h3>
-                <p className="line-clamp-2 text-sm text-zinc-500">{item.description}</p>
+                <p className="line-clamp-2 text-sm text-zinc-500">
+                  {item.description}
+                </p>
                 <div className="flex items-center justify-between pt-1">
                   <p className="text-base font-extrabold text-zinc-900">
                     ${item.price.toFixed(2)}
@@ -293,7 +313,9 @@ export default function LandingPage() {
 
       <footer className="border-t border-zinc-200 px-5 py-8 md:px-10">
         <div className="mx-auto flex w-full max-w-[1280px] flex-col items-center justify-between gap-4 text-sm text-zinc-600 md:flex-row">
-          <p>Copyright {new Date().getFullYear()} ShopPal. All rights reserved.</p>
+          <p>
+            Copyright {new Date().getFullYear()} ShopPal. All rights reserved.
+          </p>
           <div className="flex items-center gap-5 font-semibold">
             <Link href="#" className="transition hover:text-zinc-900">
               Facebook
