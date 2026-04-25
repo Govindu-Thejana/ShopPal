@@ -35,45 +35,38 @@ jobs:
         run: |
           set -e
 
-          PARAMS=$(cat <<'EOF'
-{
-  "commands": [
-    "set -e",
+          PARAMS='{
+            "commands": [
+              "set -e",
+              "echo === Preparing server ===",
 
-    "echo '=== Preparing server ==='",
+              "echo Checking git...",
+              "if ! command -v git >/dev/null 2>&1; then sudo yum install -y git unzip; fi",
+              "git --version",
 
-    "echo 'Checking git...'",
-    "if ! command -v git >/dev/null 2>&1; then sudo yum install -y git unzip; fi",
-    "git --version",
+              "echo Cleaning old deployment...",
+              "sudo rm -rf /opt/shopmate",
+              "sudo mkdir -p /opt/shopmate",
 
-    "echo 'Cleaning old deployment...'",
-    "sudo rm -rf /opt/shopmate",
-    "sudo mkdir -p /opt/shopmate",
+              "echo Cloning repository...",
+              "git clone https://x-access-token:${GH_PAT}@github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
 
-    "echo 'Cloning repository...'",
-    "git clone https://x-access-token:${GH_PAT}@github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
+              "cd /opt/shopmate",
 
-    "cd /opt/shopmate",
+              "echo Listing files...",
+              "ls -la",
 
-    "echo 'Checking project structure...'",
-    "ls -la",
+              "chmod +x deploy/aws/deploy.sh deploy/aws/write-env.sh || true",
 
-    "echo 'Checking deploy scripts...'",
-    "ls -la deploy/aws || true",
-
-    "chmod +x deploy/aws/deploy.sh deploy/aws/write-env.sh || true",
-
-    "echo 'Running deployment script...'",
-    "./deploy/aws/deploy.sh"
-  ]
-}
-EOF
-)
+              "echo Running deployment...",
+              "./deploy/aws/deploy.sh"
+            ]
+          }'
 
           COMMAND_ID=$(aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --targets "Key=tag:App,Values=shopmate" "Key=tag:Environment,Values=prod" \
-            --comment "Deploy ShopMate from GitHub Actions" \
+            --comment "Deploy ShopMate" \
             --parameters "$PARAMS" \
             --query "Command.CommandId" \
             --output text)
