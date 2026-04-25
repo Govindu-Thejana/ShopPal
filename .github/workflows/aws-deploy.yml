@@ -41,23 +41,30 @@ jobs:
               "commands": [
                 "set -e",
 
-                "echo === Preparing server ===",
+                "echo '=== Preparing server ==='",
 
+                "echo 'Checking git...'",
                 "command -v git >/dev/null 2>&1 || sudo yum install -y git unzip",
 
                 "git --version",
 
+                "echo 'Cleaning old deployment...'",
                 "rm -rf /opt/shopmate",
                 "mkdir -p /opt/shopmate",
 
-                "echo Cloning repository...",
-
+                "echo 'Cloning repository...'",
                 "git clone https://x-access-token:'"${GH_PAT}"'@github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
 
-                "cd /opt/shopmate",
+                "echo 'Moving into project root...'",
+                "cd /opt/shopmate/ShopPal",
 
+                "echo 'Verifying files...'",
+                "ls -la deploy/aws",
+
+                "echo 'Making scripts executable...'",
                 "chmod +x deploy/aws/deploy.sh deploy/aws/write-env.sh",
 
+                "echo 'Running deployment...'",
                 "./deploy/aws/deploy.sh"
               ]
             }' \
