@@ -1,80 +1,70 @@
-name: Deploy ShopMate To AWS
+- name: Deploy to EC2 via SSM
+  run: |
+    set -e
 
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+    cat > ssm.json <<EOF
+{
+  "commands": [
+    "set -e",
 
-permissions:
-  id-token: write
-  contents: read
+    "echo '=== Installing Docker ==='",
+    "sudo yum update -y",
+    "sudo yum install -y git docker",
+    "sudo systemctl start docker",
+    "sudo usermod -aG docker ec2-user || true",
 
-env:
-  AWS_REGION: ap-south-1
-  GH_PAT: ${{ secrets.GH_PAT }}
+    "echo '=== Installing Docker Compose v2 ==='",
+    "DOCKER_CONFIG=\${DOCKER_CONFIG:-/usr/libexec/docker}",
+    "sudo mkdir -p \$DOCKER_CONFIG/cli-plugins",
+    "sudo curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o \$DOCKER_CONFIG/cli-plugins/docker-compose",
+    "sudo chmod +x \$DOCKER_CONFIG/cli-plugins/docker-compose",
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
+    "echo '=== Deploying App ==='",
+    "sudo rm -rf /opt/shopmate",
+    "sudo git clone https://x-access-token:${GH_PAT}@github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    "cd /opt/shopmate",
 
-      - name: Configure AWS
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::055679187407:role/AWS_GITHUB_ACTIONS_ROLE
-          aws-region: ${{ env.AWS_REGION }}
+    "echo '=== Running Docker Compose ==='",
+    "docker compose -f docker-compose.prod.yml down || true",
+    "docker compose -f docker-compose.prod.yml up -d --build",
 
-      - name: Deploy via SSM
-        run: |
-          set -e
+    "echo '=== Deployment Complete ==='"
+  ]
+}
+EOF
 
-          COMMAND_ID=$(aws ssm send-command \
-            --document-name "AWS-RunShellScript" \
-            --targets "Key=tag:App,Values=shopmate" "Key=tag:Environment,Values=prod" \
-            --comment "ShopMate Deploy" \
-            --parameters '{
-              "commands": [
-                "set -e",
+    COMMAND_ID=$(aws ssm send-command \
+      --document-name "AWS-RunShellScript" \
+      --targets "Key=tag:App,Values=shopmate" "Key=tag:Environment,Values=prod" \
+      --comment "ShopMate Deploy" \
+      --parameters file://ssm.json \
+      --query "Command.CommandId" \
+      --output text)
 
-                "echo === Installing Docker ===",
-                "sudo yum update -y",
-                "sudo yum install -y git docker",
+    echo "Command ID: $COMMAND_ID"
 
-                "sudo systemctl start docker",
-                "sudo systemctl enable docker",
+    echo "Waiting for deployment to finish..."
 
-                "mkdir -p ~/.docker/cli-plugins",
-                "curl -SL https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose",
-                "chmod +x ~/.docker/cli-plugins/docker-compose",
+    # 🔥 Proper wait loop
+    for i in {1..30}; do
+      STATUS=$(aws ssm list-command-invocations \
+        --command-id "$COMMAND_ID" \
+        --query "CommandInvocations[0].Status" \
+        --output text)
 
-                "echo === Cleaning old deployment ===",
-                "sudo rm -rf /opt/shopmate",
+      echo "Current Status: $STATUS"
 
-                "echo === Cloning repo ===",
-                "git clone https://x-access-token:${GH_PAT}@github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
+      if [ "$STATUS" = "Success" ]; then
+        echo "Deployment succeeded"
+        break
+      elif [ "$STATUS" = "Failed" ]; then
+        echo "Deployment failed"
+        aws ssm list-command-invocations \
+          --command-id "$COMMAND_ID" \
+          --details
+        exit 1
+      fi
 
-                "cd /opt/shopmate",
-
-                "ls -la",
-
-                "echo === Deploying ===",
-                "docker compose -f docker-compose.prod.yml down || true",
-                "docker compose -f docker-compose.prod.yml up -d --build",
-
-                "echo === DONE ==="
-              ]
-            }' \
-            --query "Command.CommandId" \
-            --output text)
-
-          echo "Command ID: $COMMAND_ID"
-
-          sleep 20
-
-          aws ssm list-command-invocations \
-            --command-id "$COMMAND_ID" \
-            --details
+      sleep 10
+    done
