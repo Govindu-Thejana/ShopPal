@@ -19,12 +19,6 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
     volumes:
       - kafka-data:/var/lib/kafka/data
-    healthcheck:
-      test: ["CMD-SHELL", "echo > /dev/tcp/localhost/9092"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 40s
 
   login-service:
     build:
@@ -38,8 +32,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
     depends_on:
-      kafka:
-        condition: service_healthy
+      - kafka
 
   payment-service:
     build:
@@ -50,8 +43,7 @@ services:
       NODE_ENV: production
       KAFKA_BROKERS: kafka:9092
     depends_on:
-      kafka:
-        condition: service_healthy
+      - kafka
 
   order-service:
     build:
@@ -63,8 +55,7 @@ services:
       KAFKA_BROKERS: kafka:9092
       MONGO_URI: ${MONGO_URI}
     depends_on:
-      kafka:
-        condition: service_healthy
+      - kafka
 
   analytic-service:
     build:
@@ -76,8 +67,7 @@ services:
       KAFKA_BROKERS: kafka:9092
       PORT: 8001
     depends_on:
-      kafka:
-        condition: service_healthy
+      - kafka
 
   email-service:
     build:
@@ -91,8 +81,7 @@ services:
       EMAIL_PASS: ${EMAIL_PASS}
       EMAIL_TO: ${EMAIL_TO}
     depends_on:
-      kafka:
-        condition: service_healthy
+      - kafka
 
   api-gateway:
     image: nginx:1.27-alpine
