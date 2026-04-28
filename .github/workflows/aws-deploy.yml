@@ -12,6 +12,7 @@ permissions:
 
 env:
   AWS_REGION: ap-south-1
+  INSTANCE_ID: i-0f81ae500a87ed0d1
 
 jobs:
   deploy:
@@ -36,17 +37,6 @@ jobs:
             "commands": [
               "set -e",
 
-              "echo '=== Installing Docker ==='",
-              "sudo yum update -y",
-              "sudo yum install -y git docker",
-              "sudo systemctl start docker",
-              "sudo systemctl enable docker",
-
-              "echo '=== Installing Docker Compose ==='",
-              "sudo mkdir -p /usr/libexec/docker/cli-plugins",
-              "sudo curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o /usr/libexec/docker/cli-plugins/docker-compose",
-              "sudo chmod +x /usr/libexec/docker/cli-plugins/docker-compose",
-
               "echo '=== Deploying App ==='",
               "sudo rm -rf /opt/shopmate",
               "sudo git clone -b main https://github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
@@ -54,7 +44,7 @@ jobs:
 
               "cd /opt/shopmate",
 
-              "echo '=== Creating .env file ==='",
+              "echo '=== Creating .env ==='",
               "cat > deploy/aws/.env <<ENVEOF",
               "MONGO_URI=${{ secrets.MONGO_URI }}",
               "JWT_SECRET=${{ secrets.JWT_SECRET }}",
@@ -65,17 +55,13 @@ jobs:
               "KAFKA_BROKERS=kafka:9092",
               "ENVEOF",
 
-              "echo '=== Debug Files ==='",
-              "ls -la",
-              "ls -la deploy/aws",
-
-              "echo '=== Docker Version ==='",
-              "sudo docker --version",
+              "echo '=== Docker Compose Version ==='",
               "sudo docker compose version",
 
-              "echo '=== Running Production Docker Compose ==='",
-              "sudo docker compose -f deploy/aws/docker-compose.prod.yml down || true",
-              "sudo docker compose -f deploy/aws/docker-compose.prod.yml up -d --build",
+              "echo '=== Running Docker Compose ==='",
+              "cd deploy/aws",
+              "sudo docker compose down || true",
+              "sudo docker compose up -d --build",
 
               "echo '=== Running Containers ==='",
               "sudo docker ps",
@@ -87,7 +73,7 @@ jobs:
 
           COMMAND_ID=$(aws ssm send-command \
             --document-name "AWS-RunShellScript" \
-            --instance-ids i-050b3842d0927cb0a \
+            --instance-ids "${INSTANCE_ID}" \
             --comment "ShopMate Deploy" \
             --parameters file://ssm.json \
             --query "Command.CommandId" \
@@ -96,7 +82,7 @@ jobs:
           echo "Command ID: $COMMAND_ID"
           echo "Waiting for deployment..."
 
-          for i in {1..60}; do
+          for i in {1..90}; do
             STATUS=$(aws ssm list-command-invocations \
               --command-id "$COMMAND_ID" \
               --query "CommandInvocations[0].Status" \
@@ -106,12 +92,17 @@ jobs:
 
             if [ "$STATUS" = "Success" ]; then
               echo "Deployment succeeded"
+              aws ssm get-command-invocation \
+                --command-id "$COMMAND_ID" \
+                --instance-id "${INSTANCE_ID}" \
+                --query "StandardOutputContent" \
+                --output text
               exit 0
             elif [ "$STATUS" = "Failed" ] || [ "$STATUS" = "Cancelled" ] || [ "$STATUS" = "TimedOut" ]; then
               echo "Deployment failed"
-              aws ssm list-command-invocations \
+              aws ssm get-command-invocation \
                 --command-id "$COMMAND_ID" \
-                --details
+                --instance-id "${INSTANCE_ID}"
               exit 1
             fi
 
@@ -119,7 +110,7 @@ jobs:
           done
 
           echo "Deployment timed out"
-          aws ssm list-command-invocations \
+          aws ssm get-command-invocation \
             --command-id "$COMMAND_ID" \
-            --details
+            --instance-id "${INSTANCE_ID}"
           exit 1
