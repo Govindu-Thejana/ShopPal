@@ -36,46 +36,32 @@ jobs:
             "commands": [
               "set -e",
 
-              "echo '=== Installing Docker ==='",
-              "sudo yum update -y",
-              "sudo yum install -y git docker",
-              "sudo systemctl start docker",
-              "sudo systemctl enable docker",
-
-              "echo '=== Installing Docker Compose ==='",
-              "sudo mkdir -p /usr/libexec/docker/cli-plugins",
-              "sudo curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o /usr/libexec/docker/cli-plugins/docker-compose",
-              "sudo chmod +x /usr/libexec/docker/cli-plugins/docker-compose",
-
               "echo '=== Deploying App ==='",
+
               "sudo rm -rf /opt/shopmate",
               "sudo git clone -b main https://github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
               "sudo chown -R ec2-user:ec2-user /opt/shopmate",
 
               "cd /opt/shopmate",
 
-              "echo '=== Creating .env file ==='",
+              "echo '=== Creating .env ==='",
               "cat > deploy/aws/.env <<ENVEOF",
               "MONGO_URI=${{ secrets.MONGO_URI }}",
               "JWT_SECRET=${{ secrets.JWT_SECRET }}",
-              "ALLOWED_ORIGINS=http://43.204.28.36",
+              "ALLOWED_ORIGINS=http://${{ secrets.EC2_PUBLIC_IP }}",
               "EMAIL_USER=${{ secrets.EMAIL_USER }}",
               "EMAIL_PASS=${{ secrets.EMAIL_PASS }}",
               "EMAIL_TO=${{ secrets.EMAIL_TO }}",
               "KAFKA_BROKERS=kafka:9092",
               "ENVEOF",
 
-              "echo '=== Debug Files ==='",
-              "ls -la",
-              "ls -la deploy/aws",
+              "echo '=== Debug ENV ==='",
+              "cat deploy/aws/.env",
 
-              "echo '=== Docker Version ==='",
-              "sudo docker --version",
-              "sudo docker compose version",
-
-              "echo '=== Running Production Docker Compose ==='",
-              "sudo docker compose -f deploy/aws/docker-compose.prod.yml down || true",
-              "sudo docker compose -f deploy/aws/docker-compose.prod.yml up -d --build",
+              "echo '=== Running Docker Compose ==='",
+              "cd deploy/aws",
+              "sudo docker compose down || true",
+              "sudo docker compose up -d --build",
 
               "echo '=== Running Containers ==='",
               "sudo docker ps",
@@ -96,7 +82,7 @@ jobs:
           echo "Command ID: $COMMAND_ID"
           echo "Waiting for deployment..."
 
-          for i in {1..60}; do
+          for i in {1..30}; do
             STATUS=$(aws ssm list-command-invocations \
               --command-id "$COMMAND_ID" \
               --query "CommandInvocations[0].Status" \
