@@ -9,7 +9,7 @@ export function buildOrderEmail({
                                     tax = 0,
                                     total = 0,
                                     deliveryEta = "3–5 business days",
-                                    supportEmail = "support@shopmate.local",
+                                    supportEmail = "support@shoppal.local",
                                     address = {},
                                 }) {
     const money = (n) => Number(n).toFixed(2);
@@ -34,7 +34,7 @@ export function buildOrderEmail({
     <tr><td colspan="2" style="border-bottom:1px solid #eee;"></td></tr>
   `).join("");
 
-    const subject = `Your ShopMate order ${orderId} is confirmed`;
+    const subject = `Your ShopPal order ${orderId} is confirmed`;
 
     const html = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -53,8 +53,8 @@ export function buildOrderEmail({
                 <tr>
                   <td style="color:#fff; font-size:20px; font-weight:800; letter-spacing:.3px;">
                     <!-- Logo (CID) -->
-                    <img src="cid:shopmateLogo" alt="ShopMate" width="28" height="28" style="vertical-align:middle; border:none; outline:none;">
-                    <span style="margin-left:8px; vertical-align:middle;">ShopMate</span>
+                    <img src="cid:shoppalLogo" alt="ShopPal" width="28" height="28" style="vertical-align:middle; border:none; outline:none;">
+                    <span style="margin-left:8px; vertical-align:middle;">ShopPal</span>
                   </td>
                   <td align="right" style="color:#fff; font-size:12px;">
                     Order <span style="font-weight:700;">#${orderId}</span>
@@ -136,7 +136,7 @@ export function buildOrderEmail({
           <!-- CTA -->
           <tr>
             <td align="center" style="padding:16px 24px 8px 24px;">
-              <a href="https://shopmate.local/orders/${orderId}"
+              <a href="https://shoppal.local/orders/${orderId}"
                  style="display:inline-block; background:#111827; color:#ffffff; text-decoration:none; padding:12px 20px; border-radius:10px; font-weight:700; font-size:14px;">
                 View your order
               </a>
@@ -148,7 +148,7 @@ export function buildOrderEmail({
             <td style="padding:18px 24px 28px 24px; color:#6b7280; font-size:12px; line-height:1.6;">
               If you have any questions, reply to this email or contact us at
               <a href="mailto:${supportEmail}" style="color:#6b21a8; text-decoration:none;">${supportEmail}</a>.
-              <br/>© ${new Date().getFullYear()} ShopMate
+              <br/>© ${new Date().getFullYear()} ShopPal
             </td>
           </tr>
         </table>
@@ -176,10 +176,10 @@ ${addressHtml.replace(/<br\/>/g, "\n").replace(/<[^>]+>/g, "")}
 
 ETA: ${deliveryEta}
 
-View your order: https://shopmate.local/orders/${orderId}
+View your order: https://shoppal.local/orders/${orderId}
 Need help? ${supportEmail}
 
-— ShopMate`;
+— ShopPal`;
 
     return { subject, html, text };
 }

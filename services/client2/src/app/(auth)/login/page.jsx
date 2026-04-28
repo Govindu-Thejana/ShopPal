@@ -1,6 +1,7 @@
 "use client";
 
 import axios from "axios";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -55,7 +56,7 @@ export default function Home() {
       <div className="bg-white shadow-lg rounded-xl p-8 w-full max-w-md">
         <div className="text-center">
           <div className="text-4xl font-bold text-black mb-2 mx-auto w-full flex items-center justify-center">
-            <img src="/logo.jpg" alt="ShopPal Logo" width={160} height={30} />
+            <Image src="/logo.jpg" alt="ShopPal Logo" width={160} height={30} priority />
           </div>
           <p className="text-gray-500 mb-6">Login to continue shopping</p>
         </div>

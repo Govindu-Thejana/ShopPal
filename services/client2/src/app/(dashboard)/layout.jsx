@@ -2,8 +2,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { House, ShoppingCart } from "lucide-react";
 import { Geist, Geist_Mono } from "next/font/google";
-import "../globals.css";
+import Image from "next/image";
 import Link from "next/link";
+import "../globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,7 +25,7 @@ export default function RootLayout({ children }) {
           <div className="flex items-center gap-4">
             {/* <Image src="/logo.png" alt="logo" width={50} height={50} /> */}
             <Link href="/" className="text-2xl font-black">
-              <img src="/logo.jpg" alt="ShopPal Logo" width={160} height={30} className="inline-block -mt-1" />
+              <Image src="/logo.jpg" alt="ShopPal Logo" width={160} height={30} className="inline-block -mt-1" priority />
             </Link>
           </div>
           <div className="flex items-center gap-6">

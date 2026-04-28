@@ -90,7 +90,7 @@ const run = async () => {
           {
             filename: "logo.png",
             path: path.join(__dirname, "assets", "logo.png"),
-            cid: "shopmateLogo",
+            cid: "shoppalLogo",
           },
         ],
       };

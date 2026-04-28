@@ -7,9 +7,6 @@ import { toast } from "react-toastify";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 import { ProductContext } from "../../../context/ProductContext";
-import { useEffect, useState } from "react";
-import { FaShoppingCart, FaDollarSign, FaUsers } from "react-icons/fa";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY || "";
 
