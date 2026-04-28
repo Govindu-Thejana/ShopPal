@@ -73,7 +73,7 @@ jobs:
 
           COMMAND_ID=$(aws ssm send-command \
             --document-name "AWS-RunShellScript" \
-            --instance-ids i-050b3842d0927cb0a \
+            --instance-ids i-0f81ae500a87ed0d1 \
             --comment "ShopMate Deploy" \
             --parameters file://ssm.json \
             --query "Command.CommandId" \
