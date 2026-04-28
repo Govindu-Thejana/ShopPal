@@ -1,74 +1,73 @@
-# Microservices E-commerce Platform
+# ShopPal Microservices (Local Development Guide)
 
-A cloud-native microservices architecture built with Node.js, Next.js, MongoDB, and Kafka, deployed on Kubernetes. This project demonstrates modern distributed system patterns for an e-commerce application.
+This repository contains a microservices-based e-commerce demo with:
 
-## 🏗️ Architecture Overview
+- Next.js frontend (`services/client2`)
+- Login service
+- Payment service
+- Order service
+- Email service
+- Analytics service
+- Kafka + Kafka UI
 
-This project implements an event-driven microservices architecture with the following components:
+This README is focused on running everything locally on Windows (PowerShell).
 
-### Core Services
-- **Login Service** - JWT-based authentication and authorization
-- **Order Service** - Order management and processing 
-- **Payment Service** - Payment processing and validation
-- **Email Service** - Email notifications via Nodemailer
-- **Analytics Service** - Data analytics and reporting dashboard
+## Project Structure
 
-### Infrastructure
-- **Apache Kafka** - Event streaming and message brokering
-- **MongoDB** - Document database for data persistence
-- **Kubernetes** - Container orchestration and deployment
-- **Next.js Frontend** - Modern React-based user interface
+- `services/client2` - main frontend (Next.js)
+- `services/login-service` - auth (`/login`, `/signup`)
+- `services/payment-service` - payment endpoint (`/payment-service`)
+- `services/order-service` - consumes `payment-successful`, saves order, emits `order-successful`
+- `services/email-service` - consumes `order-successful`, sends email, emits `email-successful`
+- `services/analytic-service` - consumes events and exposes dashboard APIs
+- `services/kafka` - Docker Compose for Kafka and Kafka UI
 
-### Event-Driven Communication
-Services communicate asynchronously through Kafka topics, enabling:
-- Loose coupling between services
-- Fault tolerance and resilience
-- Scalable message processing
-- Event sourcing capabilities
+## Prerequisites
 
-## 📋 Prerequisites
+- Node.js 18+
+- npm 9+
+- Docker Desktop
+- Internet access (MongoDB Atlas + SMTP for email service)
 
-- **Docker & Kubernetes**: Local cluster (Docker Desktop, minikube, or kind)
-- **Node.js**: v16+ for local development
-- **kubectl**: Kubernetes command-line tool
-- **Git**: Version control
+## 1) Start Kafka
 
-## 🚀 Quick Start
+Open PowerShell terminal 1:
 
-### 1. Clone the Repository
-```bash path=null start=null
-git clone <repository-url>
-cd Microservices
+```powershell
+cd C:\Users\yasiru\Desktop\ShopPal\services\kafka
+docker compose up -d
 ```
 
-### 2. Build Docker Images
-```bash path=null start=null
-# Build all service images
-docker build -t micro/login-service:dev ./services/login-service
-docker build -t micro/payment-service:dev ./services/payment-service
-docker build -t micro/analytic-service:dev ./services/analytic-service
-docker build -t micro/order-service:dev ./services/order-service
-docker build -t micro/email-service:dev ./services/email-service
+Check containers:
+
+```powershell
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 ```
 
-### 3. Deploy to Kubernetes
-```bash path=null start=null
-# Apply the Kubernetes configuration
-kubectl apply -f k8s.yaml
+Expected important ports:
 
-# Verify deployments
-kubectl get pods -n micro
-kubectl get services -n micro
+- Kafka external broker: `localhost:9094`
+- Kafka UI: `http://localhost:9090`
+
+## 2) Create Kafka Topics (one-time)
+
+Open PowerShell terminal 2:
+
+```powershell
+docker exec kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --if-not-exists --topic payment-successful --partitions 1 --replication-factor 1
+docker exec kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --if-not-exists --topic order-successful --partitions 1 --replication-factor 1
+docker exec kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --if-not-exists --topic email-successful --partitions 1 --replication-factor 1
 ```
 
-### 4. Access the Application
-```bash path=null start=null
-# Port forward to access services locally
-kubectl port-forward -n micro svc/login-service 7070:7070
-kubectl port-forward -n micro svc/payment-service 8000:8000
-kubectl port-forward -n micro svc/analytic-service 8001:8001
+List topics:
+
+```powershell
+docker exec kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
 ```
 
+<<<<<<< HEAD
+## 3) Configure Email Service Env
+=======
 ### 5. API Gateway (Nginx)
 
 A local Nginx API gateway is provided at `services/gateway`.
@@ -112,240 +111,187 @@ curl http://localhost:8088/api/analytics/dashboard/summary
 ```
 
 ## 🛠️ Development Setup
+>>>>>>> d4b4811181c02170531d9ecc36533f5963e49416
 
-### Local Development
+Create/update `services/email-service/.env`:
 
-1. **Install Dependencies**
-```bash path=null start=null
-# For each service
-cd services/login-service && npm install
-cd services/payment-service && npm install
-cd services/analytic-service && npm install
-cd services/order-service && npm install
-cd services/email-service && npm install
-
-# For frontend clients
-cd services/client && npm install
-cd services/client2 && npm install
+```env
+EMAIL_USER=your_gmail@gmail.com
+EMAIL_PASS=your_gmail_app_password
+KAFKA_BROKERS=localhost:9094
 ```
 
-2. **Environment Variables**
-Create `.env` files in each service directory:
+Notes:
 
-```bash path=null start=null
-# Example for login-service/.env
-KAFKA_BROKERS=localhost:9092
-JWT_SECRET=supersecretkey
-PORT=7070
+- `EMAIL_PASS` must be a Gmail App Password, not your normal password.
+- If email credentials are invalid, only the email step will fail (other services can still run).
+
+## 4) Install Dependencies
+
+Run once per service:
+
+```powershell
+cd C:\Users\yasiru\Desktop\ShopPal\services\login-service
+npm install
+
+cd ..\payment-service
+npm install
+
+cd ..\analytic-service
+npm install
+
+cd ..\order-service
+npm install
+
+cd ..\email-service
+npm install
+
+cd ..\client2
+npm install
 ```
 
-3. **Start Services**
-```bash path=null start=null
-# Start individual services
-cd services/login-service && npm run dev
-cd services/payment-service && npm start
-cd services/analytic-service && npm run dev
+## 5) Run All Services
+
+Use separate terminals for each process.
+
+### Terminal 3 - login-service
+
+```powershell
+cd C:\Users\yasiru\Desktop\ShopPal\services\login-service
+$env:KAFKA_BROKERS="localhost:9094"
+npm run dev
 ```
 
-## 📦 Service Details
+### Terminal 4 - payment-service
 
-### Login Service (Port 7070)
-- **Technology**: Node.js, Express, JWT, bcryptjs
-- **Purpose**: User authentication and authorization
-- **Endpoints**: 
-  - `POST /login` - User authentication
-  - `POST /register` - User registration
-  - Health check endpoint at `/`
-
-### Payment Service (Port 8000)
-- **Technology**: Node.js, Express, KafkaJS
-- **Purpose**: Payment processing and validation
-- **Communication**: Publishes payment events to Kafka
-
-### Analytics Service (Port 8001)
-- **Technology**: Node.js, Express, KafkaJS
-- **Purpose**: Data analytics and dashboard
-- **Endpoints**: 
-  - `GET /dashboard/summary` - Analytics dashboard
-
-### Order Service
-- **Technology**: Node.js, KafkaJS, Mongoose
-- **Purpose**: Order management and processing
-- **Database**: MongoDB for order persistence
-
-### Email Service
-- **Technology**: Node.js, KafkaJS, Nodemailer
-- **Purpose**: Email notifications
-- **Integration**: Gmail SMTP for email delivery
-
-### Frontend Services
-- **Client**: Next.js with React Query, Tailwind CSS
-- **Client2**: Enhanced Next.js with TypeScript, React Icons, Charts
-
-## 🔧 Kubernetes Configuration
-
-The project uses a comprehensive Kubernetes setup with:
-
-### Namespace
-- **micro**: Main application namespace
-
-### ConfigMaps & Secrets
-- **micro-config**: Kafka brokers and JWT configuration
-- **micro-secrets**: Email credentials and MongoDB connection string
-
-### Services & Deployments
-All services are deployed with:
-- Health checks and readiness probes
-- Resource management
-- Service discovery through ClusterIP services
-- Environment variable injection from ConfigMaps/Secrets
-
-## 📊 Monitoring & Health Checks
-
-### Service Health Endpoints
-- **Login Service**: `GET /` (HTTP)
-- **Payment Service**: TCP socket check on port 8000
-- **Analytics Service**: `GET /dashboard/summary`
-
-### Kubernetes Health Checks
-```bash path=null start=null
-# Check pod status
-kubectl get pods -n micro
-
-# Check service endpoints
-kubectl get endpoints -n micro
-
-# View logs
-kubectl logs -n micro deployment/login-service
-kubectl logs -n micro deployment/payment-service
+```powershell
+cd C:\Users\yasiru\Desktop\ShopPal\services\payment-service
+$env:KAFKA_BROKERS="localhost:9094"
+node index.js
 ```
 
-## 🐛 Troubleshooting
+### Terminal 5 - analytic-service
 
-### Common Issues
-
-1. **Pods not starting**: Check image availability and resource constraints
-```bash path=null start=null
-kubectl describe pod <pod-name> -n micro
+```powershell
+cd C:\Users\yasiru\Desktop\ShopPal\services\analytic-service
+$env:KAFKA_BROKERS="localhost:9094"
+node index.js
 ```
 
-2. **Service communication issues**: Verify service discovery
-```bash path=null start=null
-kubectl get svc -n micro
-kubectl describe svc <service-name> -n micro
+### Terminal 6 - order-service
+
+```powershell
+cd C:\Users\yasiru\Desktop\ShopPal\services\order-service
+$env:KAFKA_BROKERS="localhost:9094"
+node index.js
 ```
 
-3. **Kafka connectivity**: Ensure Kafka is running and accessible
-```bash path=null start=null
-kubectl logs -n micro -l app=kafka
+### Terminal 7 - email-service
+
+```powershell
+cd C:\Users\yasiru\Desktop\ShopPal\services\email-service
+$env:KAFKA_BROKERS="localhost:9094"
+node index.js
 ```
 
-### Debug Commands
-```bash path=null start=null
-# View all resources in micro namespace
-kubectl get all -n micro
+### Terminal 8 - frontend (client2)
 
-# Check events for troubleshooting
-kubectl get events -n micro --sort-by='.lastTimestamp'
-
-# Execute into a pod for debugging
-kubectl exec -it -n micro <pod-name> -- sh
+```powershell
+cd C:\Users\yasiru\Desktop\ShopPal\services\client2
+npm run dev
 ```
 
-## 🔄 CI/CD & Deployment
+## URLs
 
-### Building Images
-```bash path=null start=null
-# Build script for all services
-#!/bin/bash
-services=("login-service" "payment-service" "analytic-service" "order-service" "email-service")
+- Frontend: `http://localhost:3000`
+- Login service health: `http://localhost:7070/`
+- Analytics summary: `http://localhost:8001/dashboard/summary`
+- Kafka UI: `http://localhost:9090`
 
-for service in "${services[@]}"; do
-  echo "Building $service..."
-  docker build -t micro/$service:dev ./services/$service
-done
+## Existing Login Credentials
+
+These are hardcoded in `services/login-service/index.js`:
+
+- `nisal` / `123456`
+- `alice` / `password`
+- `hiruna` / `hii@1234`
+- `user1` / `hii@user1`
+
+## End-to-End Test (Payment -> Order -> Email -> Analytics)
+
+Run this in a new PowerShell terminal:
+
+```powershell
+$body = @{ username = "user1"; cart = @(@{ name = "Item"; price = 10 }) } | ConvertTo-Json -Depth 5
+Invoke-RestMethod -Uri "http://localhost:8000/payment-service" -Method POST -ContentType "application/json" -Body $body
+Invoke-RestMethod -Uri "http://localhost:8001/dashboard/summary" -Method GET
 ```
 
-### Deployment Updates
-```bash path=null start=null
-# Update deployment with new image
-kubectl set image deployment/login-service -n micro login-service=micro/login-service:new-tag
+If everything is connected:
 
-# Rolling restart
-kubectl rollout restart deployment/login-service -n micro
+- Payment count increases
+- Order count increases
+- Email count increases (if SMTP credentials work)
+
+## API Quick Reference
+
+### login-service
+
+- `GET /` -> health
+- `POST /login`
+- `POST /signup`
+
+### payment-service
+
+- `POST /payment-service`
+
+### analytic-service
+
+- `GET /dashboard/summary`
+- `GET /dashboard/recent-payments`
+- `GET /dashboard/recent-orders`
+- `GET /dashboard/recent-emails`
+
+## Troubleshooting
+
+### 1) Kafka connection errors (`ENOTFOUND kafka` or `ECONNREFUSED`)
+
+Cause: service trying `kafka:9092` in local host mode.
+
+Fix:
+
+- Ensure each Node service has `KAFKA_BROKERS=localhost:9094` before start.
+- Ensure Docker Kafka container is up.
+
+### 2) Analytics shows old/high counts after restart
+
+Cause: consumers use `fromBeginning: true`, so messages can be replayed.
+
+Fix options:
+
+- Use fresh Kafka topics for clean tests, or
+- Change consumer settings/group IDs for test isolation.
+
+### 3) Email not increasing
+
+Check:
+
+- `services/email-service/.env` values
+- Gmail app password validity
+- email-service terminal logs
+
+### 4) Next.js hydration error with nested `<html>`
+
+Only root layout should render `<html>` and `<body>`.
+Route-group layouts must return wrappers/fragments only.
+
+## Stop Everything
+
+Stop Node services: `Ctrl + C` in each terminal.
+
+Stop Kafka:
+
+```powershell
+cd C:\Users\yasiru\Desktop\ShopPal\services\kafka
+docker compose down
 ```
-
-## 📈 Scaling
-
-### Horizontal Pod Autoscaling
-```yaml path=null start=null
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: login-service-hpa
-  namespace: micro
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: login-service
-  minReplicas: 1
-  maxReplicas: 5
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-```
-
-### Manual Scaling
-```bash path=null start=null
-# Scale deployment replicas
-kubectl scale deployment login-service --replicas=3 -n micro
-```
-
-## 🔐 Security Considerations
-
-- **JWT tokens** for stateless authentication
-- **Kubernetes secrets** for sensitive configuration
-- **CORS configuration** for frontend security
-- **Network policies** can be implemented for service isolation
-- **Resource limits** to prevent resource exhaustion
-
-## 📚 Technology Stack
-
-| Component | Technology | Version |
-|-----------|------------|---------|
-| Runtime | Node.js | 16+ |
-| Frontend | Next.js | 15.x |
-| Database | MongoDB | Atlas |
-| Message Broker | Apache Kafka | 2.x |
-| Orchestration | Kubernetes | 1.24+ |
-| Authentication | JWT | - |
-| UI Framework | React | 19.x |
-| Styling | Tailwind CSS | 4.x |
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the ISC License - see the individual package.json files for details.
-
-## 🆘 Support
-
-For support and questions:
-- Create an issue in the repository
-- Check the troubleshooting section
-- Review Kubernetes logs for service-specific issues
-
----
-
-**Note**: This is a university project for Cloud Computing coursework, demonstrating microservices architecture and Kubernetes deployment patterns.

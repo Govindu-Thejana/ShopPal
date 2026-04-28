@@ -1,26 +1,86 @@
-export const cart = [
-    {
-      id: 1,
-      name: "Nike Air Max",
-      price: 129.9,
-      image: "/product1.png",
-      description:
-        "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos. Lorem ipsum dolor sit amet consectetur adipisicing elit.",
-    },
-    {
-      id: 2,
-      name: "Adidas Superstar Cap",
-      price: 29.9,
-      image: "/product2.png",
-      description:
-        "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos. Lorem ipsum dolor sit amet consectetur adipisicing elit.",
-    },
-    {
-      id: 3,
-      name: "Puma Yellow T-Shirt",
-      price: 49.9,
-      image: "/product3.png",
-      description:
-        "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos. Lorem ipsum dolor sit amet consectetur adipisicing elit.",
-    },
-  ];
+export const defaultProducts = [
+  {
+    id: 1,
+    name: "Louis Vuitton LV Tilted Sneaker",
+    category: "men",
+    price: 1200.0,
+    image: "/product1.png",
+    description: "Luxury Louis Vuitton LV Tilted sneaker featuring premium materials, signature LV design, and high-end streetwear style.",
+  },
+  {
+    id: 2,
+    name: "Louis Vuitton LV Aura Low Rectangle Sunglasses",
+    category: "accessories",
+    price: 435.0,
+    image: "/product2.png",
+    description: "Luxury Louis Vuitton rectangular sunglasses with acetate frame, gold-toned signature details, and 100% UV protection for stylish everyday wear.",
+  },
+  {
+    id: 3,
+    name: "Louis Vuitton All In BB Bag",
+    category: "women",
+    price: 2800.0,
+    image: "/product3.png",
+    description:
+      "Elegant Louis Vuitton All In BB bag crafted from calfskin leather with suede lining, gold-tone hardware, and a removable zipped pouch. Designed for cross-body, shoulder, or hand carry.",
+  },
+  {
+    id: 4,
+    name: "Louis Vuitton Color Blossom XL Sun Pendant",
+    category: "accessories",
+    price: 21000.0,
+    image: "/produc4.png",
+    description:
+      "Luxury Louis Vuitton pendant crafted in 18K pink gold with white mother-of-pearl and diamonds. Features the iconic Monogram flower design with an adjustable chain for versatile styling.",
+  },
+  {
+    id: 5,
+    name: "Louis Vuitton Stellar Times Perfume",
+    category: "accessories",
+    price: 595.0,
+    image: "/produc5.png",
+    description:
+      "Luxury Louis Vuitton extrait de parfum featuring notes of white amber, orange blossom, and Peru balsam. A rich, long-lasting fragrance with a warm, elegant scent.",
+  },
+  {
+    id: 6,
+    name: "Louis Vuitton Nevada Comfort Sandal",
+    category: "women",
+    price: 1050.0,
+    image: "/produc6.png",
+    description:
+      "Sporty luxury Louis Vuitton sandal crafted from soft lambskin leather with adjustable velcro straps, gold-tone LV Twist hardware, and a lightweight EVA outsole.",
+  },
+  {
+    id: 7,
+    name: "Louis Vuitton 6AM Mule",
+    category: "women",
+    price: 965.0,
+    image: "/produc7.png",
+    description: "Elegant Louis Vuitton 6AM mule crafted in Monogram denim with a wide strap, decorative leather detail, and gold-tone stud for a chic look.",
+  },
+  {
+    id: 8,
+    name: "Louis Vuitton Nanogram Twist Bracelet",
+    category: "accessories",
+    price: 560.0,
+    image: "/produc8.png",
+    description: "Stylish Louis Vuitton bracelet featuring a double-wrap Monogram leather cord with gold-tone metal and Nanogram signature.",
+  },
+  {
+    id: 9,
+    name: "Louis Vuitton LV Dimension Monogram Surplus 40mm Reversible Belt",
+    category: "men",
+    price: 615.0,
+    image: "/produc9.png",
+    description: "Luxury Louis Vuitton reversible belt featuring Monogram canvas and leather with a bold LV Dimension buckle.",
+  },
+  {
+    id: 10,
+    name: "Louis Vuitton Rush Bumbag Monogram Surplus",
+    category: "men",
+    price: 2500.0,
+    image: "/produc10.png",
+    description: "Versatile Louis Vuitton bumbag with Monogram Surplus canvas, adjustable strap, and multiple compartments for daily essentials.",
+  },
+];

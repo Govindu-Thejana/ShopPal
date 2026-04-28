@@ -128,6 +128,15 @@ const Pay = ({ cart }) => {
     },
   });
 
+  const handleCheckout = () => {
+    if (!cart?.length) {
+      toast.warning("Your cart is empty.");
+      return;
+    }
+
+    mutate({ cart, username });
+  };
+
   return (
     <div className="bg-red-50 flex flex-col items-center justify-center gap-4 py-8 rounded-xl">
       <div className="flex flex-col gap-12">
@@ -160,7 +169,7 @@ const Pay = ({ cart }) => {
         <button
           disabled={isPending}
           className="bg-black px-5 py-3 text-white rounded-full flex items-center gap-4 w-max cursor-pointer hover:bg-gray-700 transition-all duration-300 disabled:cursor-not-allowed"
-          onClick={() => mutate({ cart, username })}
+          onClick={handleCheckout}
         >
           <span className="tracking-wider text-sm">CHECKOUT</span>
           {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}

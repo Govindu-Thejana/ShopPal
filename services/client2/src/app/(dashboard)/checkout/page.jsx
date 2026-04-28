@@ -2,13 +2,14 @@
 
 import React, { useContext, useState } from "react";
 import { FaCcVisa, FaCcPaypal, FaGooglePay } from "react-icons/fa";
+import { toast } from "react-toastify";
 
 import Pay from "../../../components/Pay";
 import { CartContext } from "../../../context/CartContext";
 
 const CheckoutPage = () => {
   const [selectedPayment, setSelectedPayment] = useState("");
-  const { cart } = useContext(CartContext);
+  const { cart, clearCart } = useContext(CartContext);
 
   return (
     <div className=" bg-gray-50 flex justify-center py-10 px-4">
@@ -18,7 +19,7 @@ const CheckoutPage = () => {
             <h2 className="text-lg font-semibold mb-3">Shipping address</h2>
             <div>
               <p className="font-semibold">
-                Deshan Gamage <span className="ml-2 text-gray-500">+94 7896 3356</span>
+                Badrajith <span className="ml-2 text-gray-500">+94 71 586 5698</span>
               </p>
               <p className="text-gray-600">No 4, Rahula road, Colombo 10, Sri Lanka</p>
             </div>
@@ -63,7 +64,13 @@ const CheckoutPage = () => {
         </div>
 
         <div className="lg:col-span-1">
-          <Pay cart={cart} />
+          <Pay
+            cart={cart}
+            onPaymentSuccess={() => {
+              clearCart();
+              toast.success("Order placed and cart cleared.");
+            }}
+          />
         </div>
       </div>
     </div>
