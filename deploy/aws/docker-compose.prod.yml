@@ -98,14 +98,14 @@ services:
     build:
       context: ../../services/client
       args:
-        NEXT_PUBLIC_API_GATEWAY: /api
+        NEXT_PUBLIC_API_GATEWAY: ""
     container_name: shopmate-client
     restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 3000
       HOSTNAME: 0.0.0.0
-      NEXT_PUBLIC_API_GATEWAY: /api
+      NEXT_PUBLIC_API_GATEWAY: ""
     depends_on:
       - api-gateway
 
@@ -113,14 +113,14 @@ services:
     build:
       context: ../../services/client2
       args:
-        NEXT_PUBLIC_API_GATEWAY: /api
+        NEXT_PUBLIC_API_GATEWAY: ""
     container_name: shopmate-client2
     restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 3001
       HOSTNAME: 0.0.0.0
-      NEXT_PUBLIC_API_GATEWAY: /api
+      NEXT_PUBLIC_API_GATEWAY: ""
     depends_on:
       - api-gateway
 

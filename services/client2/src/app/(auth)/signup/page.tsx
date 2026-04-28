@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 
-const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY || "http://localhost:8088";
+const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY || "";
 
 export default function Signup() {
   const [username, setUsername] = useState("");

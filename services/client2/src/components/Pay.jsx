@@ -97,7 +97,7 @@ import Swal from "sweetalert2";
 
 import { CartContext } from "../context/CartContext";
 
-const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY || "http://localhost:8088";
+const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY || "";
 
 const Pay = ({ cart }) => {
   const { clearCart } = useContext(CartContext);

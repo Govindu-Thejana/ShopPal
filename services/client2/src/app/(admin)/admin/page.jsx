@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { FaShoppingCart, FaDollarSign, FaUsers } from "react-icons/fa";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
-const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY || "http://localhost:8088";
+const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY || "";
 
 const salesData = [
   { name: "Jan", sales: 4000 },
