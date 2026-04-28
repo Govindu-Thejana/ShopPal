@@ -12,7 +12,6 @@ permissions:
 
 env:
   AWS_REGION: ap-south-1
-  GH_PAT: ${{ secrets.GH_PAT }}
 
 jobs:
   deploy:
@@ -32,7 +31,7 @@ jobs:
         run: |
           set -e
 
-          cat <<'EOF' > ssm.json
+          cat > ssm.json <<EOF
           {
             "commands": [
               "set -e",
@@ -43,30 +42,40 @@ jobs:
               "sudo systemctl start docker",
               "sudo systemctl enable docker",
 
-              "echo '=== Installing Docker Compose v2 ==='",
-              "DOCKER_CONFIG=/usr/lib/docker",
-              "sudo mkdir -p $DOCKER_CONFIG/cli-plugins",
-              "sudo curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o $DOCKER_CONFIG/cli-plugins/docker-compose",
-              "sudo chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose",
+              "echo '=== Installing Docker Compose ==='",
+              "sudo mkdir -p /usr/libexec/docker/cli-plugins",
+              "sudo curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o /usr/libexec/docker/cli-plugins/docker-compose",
+              "sudo chmod +x /usr/libexec/docker/cli-plugins/docker-compose",
 
               "echo '=== Deploying App ==='",
               "sudo rm -rf /opt/shopmate",
-              "sudo git clone https://x-access-token:${GH_PAT}@github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
+              "sudo git clone -b main https://github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
+              "sudo chown -R ec2-user:ec2-user /opt/shopmate",
 
               "cd /opt/shopmate",
 
-              "echo '=== Debug: Files ==='",
+              "echo '=== Creating .env file ==='",
+              "cat > deploy/aws/.env <<ENVEOF",
+              "MONGO_URI=${{ secrets.MONGO_URI }}",
+              "JWT_SECRET=${{ secrets.JWT_SECRET }}",
+              "ALLOWED_ORIGINS=http://43.204.28.36",
+              "EMAIL_USER=${{ secrets.EMAIL_USER }}",
+              "EMAIL_PASS=${{ secrets.EMAIL_PASS }}",
+              "EMAIL_TO=${{ secrets.EMAIL_TO }}",
+              "KAFKA_BROKERS=kafka:9092",
+              "ENVEOF",
+
+              "echo '=== Debug Files ==='",
               "ls -la",
+              "ls -la deploy/aws",
 
-              "echo '=== Debug: Docker Version ==='",
-              "docker --version",
+              "echo '=== Docker Version ==='",
+              "sudo docker --version",
+              "sudo docker compose version",
 
-              "echo '=== Debug: Compose Version ==='",
-              "sudo docker compose version || echo 'Compose not working'",
-
-              "echo '=== Running Docker Compose ==='",
-              "sudo docker compose -f docker-compose.yml down || true",
-              "sudo docker compose -f docker-compose.yml up -d --build",
+              "echo '=== Running Production Docker Compose ==='",
+              "sudo docker compose -f deploy/aws/docker-compose.prod.yml down || true",
+              "sudo docker compose -f deploy/aws/docker-compose.prod.yml up -d --build",
 
               "echo '=== Running Containers ==='",
               "sudo docker ps",
@@ -87,7 +96,7 @@ jobs:
           echo "Command ID: $COMMAND_ID"
           echo "Waiting for deployment..."
 
-          for i in {1..30}; do
+          for i in {1..60}; do
             STATUS=$(aws ssm list-command-invocations \
               --command-id "$COMMAND_ID" \
               --query "CommandInvocations[0].Status" \
@@ -97,8 +106,8 @@ jobs:
 
             if [ "$STATUS" = "Success" ]; then
               echo "Deployment succeeded"
-              break
-            elif [ "$STATUS" = "Failed" ]; then
+              exit 0
+            elif [ "$STATUS" = "Failed" ] || [ "$STATUS" = "Cancelled" ] || [ "$STATUS" = "TimedOut" ]; then
               echo "Deployment failed"
               aws ssm list-command-invocations \
                 --command-id "$COMMAND_ID" \
@@ -108,3 +117,9 @@ jobs:
 
             sleep 10
           done
+
+          echo "Deployment timed out"
+          aws ssm list-command-invocations \
+            --command-id "$COMMAND_ID" \
+            --details
+          exit 1
