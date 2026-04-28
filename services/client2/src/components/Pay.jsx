@@ -92,22 +92,16 @@ import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { LaptopMinimalCheck, Loader2, ShoppingCart } from "lucide-react";
 import Image from "next/image";
-<<<<<<< HEAD
-import { toast } from "react-toastify";
-
-const Pay = ({ cart, onPaymentSuccess }) => {
-=======
 import { useContext } from "react";
 import Swal from "sweetalert2";
 
 import { CartContext } from "../context/CartContext";
 
-const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY || "http://localhost:8088";
+const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY || "";
 
 const Pay = ({ cart }) => {
   const { clearCart } = useContext(CartContext);
 
->>>>>>> d4b4811181c02170531d9ecc36533f5963e49416
   // Get username from localStorage
   const username = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("user") || "{}")?.username || "Guest" : "Guest";
 
@@ -125,18 +119,12 @@ const Pay = ({ cart }) => {
       return { ...response, duration };
     },
     onSuccess: () => {
-<<<<<<< HEAD
-      if (onPaymentSuccess) {
-        onPaymentSuccess();
-      }
-=======
       clearCart();
       Swal.fire({
         title: "Order Completed Successfully!",
         text: "You clicked the button!",
         icon: "success",
       });
->>>>>>> d4b4811181c02170531d9ecc36533f5963e49416
     },
   });
 

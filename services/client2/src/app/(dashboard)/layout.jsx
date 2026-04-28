@@ -19,14 +19,12 @@ export default function RootLayout({ children }) {
   const queryClient = new QueryClient();
   return (
     <QueryClientProvider client={queryClient}>
-      <div
-        className={`${geistSans.variable} ${geistMono.variable} antialiased max-w-[1920px] mx-auto px-16 lg:px-0`}
-      >
-        <nav className="flex justify-between items-center py-4 mb-8 px-5 shadow-lg">
+      <div className={`${geistSans.variable} ${geistMono.variable} antialiased max-w-[1920px] mx-auto px-16 lg:px-16`}>
+        <nav className="flex justify-between items-center py-4 mb-8 px-[64px] shadow-lg">
           <div className="flex items-center gap-4">
             {/* <Image src="/logo.png" alt="logo" width={50} height={50} /> */}
             <Link href="/" className="text-2xl font-black">
-              Shop Mate
+              <img src="/logo.jpg" alt="ShopPal Logo" width={160} height={30} className="inline-block -mt-1" />
             </Link>
           </div>
           <div className="flex items-center gap-6">

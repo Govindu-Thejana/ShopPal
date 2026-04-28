@@ -9,6 +9,7 @@ const app = express();
 // Allow localhost:3000 (and other localhost ports if needed)
 const ALLOWED_ORIGINS = [
   "http://localhost:3000",
+  "http://43.204.28.36",
   // "http://localhost:5173", // uncomment if you use Vite, etc.
 ];
 

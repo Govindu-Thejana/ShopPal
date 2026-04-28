@@ -63,7 +63,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY || "http://localhost:8088";
+const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY || "";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");

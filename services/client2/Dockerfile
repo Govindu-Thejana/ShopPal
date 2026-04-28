@@ -7,7 +7,7 @@ RUN npm ci || npm install
 FROM node:20-alpine AS builder
 WORKDIR /app
 RUN apk add --no-cache libc6-compat
-ARG NEXT_PUBLIC_API_GATEWAY=http://localhost:8088
+ARG NEXT_PUBLIC_API_GATEWAY=
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_PUBLIC_API_GATEWAY=${NEXT_PUBLIC_API_GATEWAY}
 COPY --from=deps /app/node_modules ./node_modules

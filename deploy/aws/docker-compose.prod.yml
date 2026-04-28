@@ -1,0 +1,141 @@
+services:
+  kafka:
+    image: apache/kafka:3.8.0
+    container_name: shopmate-kafka
+    hostname: kafka
+    restart: unless-stopped
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+
+  login-service:
+    build:
+      context: ../../services/login-service
+    container_name: shopmate-login-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 7070
+      KAFKA_BROKERS: kafka:9092
+      JWT_SECRET: ${JWT_SECRET}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+    depends_on:
+      - kafka
+
+  payment-service:
+    build:
+      context: ../../services/payment-service
+    container_name: shopmate-payment-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      KAFKA_BROKERS: kafka:9092
+    depends_on:
+      - kafka
+
+  order-service:
+    build:
+      context: ../../services/order-service
+    container_name: shopmate-order-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      KAFKA_BROKERS: kafka:9092
+      MONGO_URI: ${MONGO_URI}
+    depends_on:
+      - kafka
+
+  analytic-service:
+    build:
+      context: ../../services/analytic-service
+    container_name: shopmate-analytic-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      KAFKA_BROKERS: kafka:9092
+      PORT: 8001
+    depends_on:
+      - kafka
+
+  email-service:
+    build:
+      context: ../../services/email-service
+    container_name: shopmate-email-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      KAFKA_BROKERS: kafka:9092
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASS: ${EMAIL_PASS}
+      EMAIL_TO: ${EMAIL_TO}
+    depends_on:
+      - kafka
+
+  api-gateway:
+    image: nginx:1.27-alpine
+    container_name: shopmate-api-gateway
+    restart: unless-stopped
+    volumes:
+      - ../../services/gateway/nginx.docker.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - login-service
+      - payment-service
+      - analytic-service
+
+  client:
+    build:
+      context: ../../services/client
+      args:
+        NEXT_PUBLIC_API_GATEWAY: ""
+    container_name: shopmate-client
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      NEXT_PUBLIC_API_GATEWAY: ""
+    depends_on:
+      - api-gateway
+
+  client2:
+    build:
+      context: ../../services/client2
+      args:
+        NEXT_PUBLIC_API_GATEWAY: ""
+    container_name: shopmate-client2
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      HOSTNAME: 0.0.0.0
+      NEXT_PUBLIC_API_GATEWAY: ""
+    depends_on:
+      - api-gateway
+
+  edge-proxy:
+    image: nginx:1.27-alpine
+    container_name: shopmate-edge-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.edge.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - client2
+      - api-gateway
+
+volumes:
+  kafka-data:
+EOF

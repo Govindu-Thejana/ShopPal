@@ -1,28 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-<<<<<<< HEAD
 import { useContext, useEffect, useState } from "react";
 import { FaShoppingCart, FaDollarSign, FaUsers } from "react-icons/fa";
 import { toast } from "react-toastify";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 import { ProductContext } from "../../../context/ProductContext";
-=======
 import { useEffect, useState } from "react";
 import { FaShoppingCart, FaDollarSign, FaUsers } from "react-icons/fa";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
-const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY || "http://localhost:8088";
->>>>>>> d4b4811181c02170531d9ecc36533f5963e49416
+const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY || "";
 
 const salesData = [
   { name: "Jan", sales: 4000 },
@@ -58,24 +47,11 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-<<<<<<< HEAD
-        const [
-          summaryRes,
-          paymentsRes,
-          ordersRes,
-          emailsRes,
-        ] = await Promise.all([
-          fetch("http://localhost:8001/dashboard/summary"),
-          fetch("http://localhost:8001/dashboard/recent-payments"),
-          fetch("http://localhost:8001/dashboard/recent-orders"),
-          fetch("http://localhost:8001/dashboard/recent-emails"),
-=======
         const [summaryRes, paymentsRes, ordersRes, emailsRes] = await Promise.all([
           fetch(`${API_GATEWAY}/api/analytics/dashboard/summary`),
           fetch(`${API_GATEWAY}/api/analytics/dashboard/recent-payments`),
           fetch(`${API_GATEWAY}/api/analytics/dashboard/recent-orders`),
           fetch(`${API_GATEWAY}/api/analytics/dashboard/recent-emails`),
->>>>>>> d4b4811181c02170531d9ecc36533f5963e49416
         ]);
 
         setSummary(await summaryRes.json());
@@ -190,17 +166,13 @@ export default function AdminDashboard() {
               type="text"
               placeholder="Product name"
               value={form.name}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, name: e.target.value }))
-              }
+              onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
               className="w-full rounded border border-gray-300 px-3 py-2"
             />
             <div className="grid grid-cols-2 gap-3">
               <select
                 value={form.category}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, category: e.target.value }))
-                }
+                onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
                 className="w-full rounded border border-gray-300 px-3 py-2"
               >
                 <option value="men">men</option>
@@ -214,9 +186,7 @@ export default function AdminDashboard() {
                 step="0.01"
                 placeholder="Price"
                 value={form.price}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, price: e.target.value }))
-                }
+                onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
                 className="w-full rounded border border-gray-300 px-3 py-2"
               />
             </div>
@@ -224,39 +194,27 @@ export default function AdminDashboard() {
               type="text"
               placeholder="Image path (optional), e.g. /product11.jpg"
               value={form.image}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, image: e.target.value }))
-              }
+              onChange={(e) => setForm((prev) => ({ ...prev, image: e.target.value }))}
               className="w-full rounded border border-gray-300 px-3 py-2"
             />
             <textarea
               rows={3}
               placeholder="Description"
               value={form.description}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, description: e.target.value }))
-              }
+              onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
               className="w-full rounded border border-gray-300 px-3 py-2"
             />
-            <button
-              type="submit"
-              className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 cursor-pointer"
-            >
+            <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 cursor-pointer">
               Add Product
             </button>
           </form>
         </div>
 
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">
-            Current Products ({products.length})
-          </h2>
+          <h2 className="text-xl font-semibold mb-4">Current Products ({products.length})</h2>
           <ul className="max-h-80 space-y-2 overflow-y-auto text-sm text-gray-700">
             {products.map((item) => (
-              <li
-                key={item.id}
-                className="rounded border border-gray-200 px-3 py-2"
-              >
+              <li key={item.id} className="rounded border border-gray-200 px-3 py-2">
                 <div className="font-semibold">{item.name}</div>
                 <div className="text-xs text-gray-500">
                   {item.category} | ${Number(item.price).toFixed(2)}

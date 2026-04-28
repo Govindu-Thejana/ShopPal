@@ -1,0 +1,116 @@
+name: Deploy ShopMate To AWS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ap-south-1
+  INSTANCE_ID: i-0f81ae500a87ed0d1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::055679187407:role/AWS_GITHUB_ACTIONS_ROLE
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy via SSM
+        run: |
+          set -e
+
+          cat > ssm.json <<EOF
+          {
+            "commands": [
+              "set -e",
+
+              "echo '=== Deploying App ==='",
+              "sudo rm -rf /opt/shopmate",
+              "sudo git clone -b main https://github.com/Govindu-Thejana/ShopPal.git /opt/shopmate",
+              "sudo chown -R ec2-user:ec2-user /opt/shopmate",
+
+              "cd /opt/shopmate",
+
+              "echo '=== Creating .env ==='",
+              "cat > deploy/aws/.env <<ENVEOF",
+              "MONGO_URI=${{ secrets.MONGO_URI }}",
+              "JWT_SECRET=${{ secrets.JWT_SECRET }}",
+              "ALLOWED_ORIGINS=http://43.204.28.36",
+              "EMAIL_USER=${{ secrets.EMAIL_USER }}",
+              "EMAIL_PASS=${{ secrets.EMAIL_PASS }}",
+              "EMAIL_TO=${{ secrets.EMAIL_TO }}",
+              "KAFKA_BROKERS=kafka:9092",
+              "ENVEOF",
+
+              "echo '=== Docker Compose Version ==='",
+              "sudo docker compose version",
+
+              "echo '=== Running Docker Compose ==='",
+              "cd deploy/aws",
+              "sudo docker compose down || true",
+              "sudo docker compose up -d --build",
+
+              "echo '=== Running Containers ==='",
+              "sudo docker ps",
+
+              "echo '=== Deployment Complete ==='"
+            ]
+          }
+          EOF
+
+          COMMAND_ID=$(aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --instance-ids "${INSTANCE_ID}" \
+            --comment "ShopMate Deploy" \
+            --parameters file://ssm.json \
+            --query "Command.CommandId" \
+            --output text)
+
+          echo "Command ID: $COMMAND_ID"
+          echo "Waiting for deployment..."
+
+          for i in {1..90}; do
+            STATUS=$(aws ssm list-command-invocations \
+              --command-id "$COMMAND_ID" \
+              --query "CommandInvocations[0].Status" \
+              --output text)
+
+            echo "Status: $STATUS"
+
+            if [ "$STATUS" = "Success" ]; then
+              echo "Deployment succeeded"
+              aws ssm get-command-invocation \
+                --command-id "$COMMAND_ID" \
+                --instance-id "${INSTANCE_ID}" \
+                --query "StandardOutputContent" \
+                --output text
+              exit 0
+            elif [ "$STATUS" = "Failed" ] || [ "$STATUS" = "Cancelled" ] || [ "$STATUS" = "TimedOut" ]; then
+              echo "Deployment failed"
+              aws ssm get-command-invocation \
+                --command-id "$COMMAND_ID" \
+                --instance-id "${INSTANCE_ID}"
+              exit 1
+            fi
+
+            sleep 10
+          done
+
+          echo "Deployment timed out"
+          aws ssm get-command-invocation \
+            --command-id "$COMMAND_ID" \
+            --instance-id "${INSTANCE_ID}"
+          exit 1

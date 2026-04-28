@@ -96,7 +96,7 @@ import axios from "axios";
 import { LaptopMinimalCheck, Loader2, ShoppingCart } from "lucide-react";
 import Image from "next/image";
 
-const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY || "http://localhost:8088";
+const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY || "";
 
 const Pay = ({ cart }) => {
   // Get username from localStorage

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 
-const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY || "http://localhost:8088";
+const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY || "";
 
 export default function Signup() {
   const [username, setUsername] = useState("");
@@ -36,9 +36,7 @@ export default function Signup() {
       // Redirect to login after signup
       router.push("/login");
     } catch (err: unknown) {
-      const msg = isAxiosError(err)
-        ? err.response?.data?.message || "Signup failed"
-        : "Signup failed";
+      const msg = isAxiosError(err) ? err.response?.data?.message || "Signup failed" : "Signup failed";
       toast.error(`❌ ${msg}`);
     } finally {
       setLoading(false);
@@ -49,7 +47,9 @@ export default function Signup() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-200 to-orange-100">
       <div className="bg-white shadow-lg rounded-xl p-8 w-full max-w-md">
         <div className="text-center">
-          <div className="text-4xl font-bold text-black mb-2">🛒 ShopPal</div>
+          <div className="text-4xl font-bold text-black mb-2">
+            <img src="/logo.jpg" alt="ShopPal Logo" width={160} height={30} className="inline-block -mt-1" />
+          </div>
           <p className="text-gray-500 mb-6">Create an account to start shopping</p>
         </div>
 

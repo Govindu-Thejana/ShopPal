@@ -1,11 +1,6 @@
 "use client";
 
-<<<<<<< HEAD
-import React, { useState } from "react";
-import { useContext } from "react";
-=======
 import React, { useContext, useState } from "react";
->>>>>>> d4b4811181c02170531d9ecc36533f5963e49416
 import { FaCcVisa, FaCcPaypal, FaGooglePay } from "react-icons/fa";
 import { toast } from "react-toastify";
 
@@ -14,11 +9,7 @@ import { CartContext } from "../../../context/CartContext";
 
 const CheckoutPage = () => {
   const [selectedPayment, setSelectedPayment] = useState("");
-<<<<<<< HEAD
   const { cart, clearCart } = useContext(CartContext);
-=======
-  const { cart } = useContext(CartContext);
->>>>>>> d4b4811181c02170531d9ecc36533f5963e49416
 
   return (
     <div className=" bg-gray-50 flex justify-center py-10 px-4">
@@ -28,7 +19,7 @@ const CheckoutPage = () => {
             <h2 className="text-lg font-semibold mb-3">Shipping address</h2>
             <div>
               <p className="font-semibold">
-                Deshan Gamage <span className="ml-2 text-gray-500">+94 7896 3356</span>
+                Badrajith <span className="ml-2 text-gray-500">+94 71 586 5698</span>
               </p>
               <p className="text-gray-600">No 4, Rahula road, Colombo 10, Sri Lanka</p>
             </div>
