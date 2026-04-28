@@ -1,13 +1,13 @@
 "use client";
 
+import { ArrowRight, Compass, Plus, RefreshCcw, ShoppingBag, Sparkles, Truck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useContext } from "react";
 
 import HeroImg from "../../public/girl.png"; // Replace with model/fashion banner
-import { ArrowRight, Compass, Plus, RefreshCcw, ShoppingBag, Sparkles, Truck } from "lucide-react";
-import { ProductContext } from "../context/ProductContext";
-import { useContext } from "react";
 import { CartContext } from "../context/CartContext";
+import { ProductContext } from "../context/ProductContext";
 
 export default function LandingPage() {
   const { products } = useContext(ProductContext);
@@ -31,7 +31,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 border-b border-zinc-200/60 bg-white/85 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-[1280px] items-center justify-between px-5 py-4 md:px-10">
           <Link href="/" className="text-2xl font-black tracking-tight text-zinc-900">
-            <img src="/logo.jpg" alt="ShopPal Logo" width={120} height={30} className="inline-block -mt-1" />
+            <Image src="/logo.jpg" alt="ShopPal Logo" width={120} height={30} className="inline-block -mt-1" priority />
           </Link>
           <nav className="hidden items-center gap-7 text-sm font-semibold text-zinc-600 md:flex">
             <Link href="/shop" className="transition hover:text-zinc-900">

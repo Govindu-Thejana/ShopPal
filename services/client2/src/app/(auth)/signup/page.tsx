@@ -1,6 +1,7 @@
 "use client";
 
 import axios, { isAxiosError } from "axios";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
@@ -48,7 +49,7 @@ export default function Signup() {
       <div className="bg-white shadow-lg rounded-xl p-8 w-full max-w-md">
         <div className="text-center">
           <div className="text-4xl font-bold text-black mb-2">
-            <img src="/logo.jpg" alt="ShopPal Logo" width={160} height={30} className="inline-block -mt-1" />
+            <Image src="/logo.jpg" alt="ShopPal Logo" width={160} height={30} className="inline-block -mt-1" priority />
           </div>
           <p className="text-gray-500 mb-6">Create an account to start shopping</p>
         </div>
