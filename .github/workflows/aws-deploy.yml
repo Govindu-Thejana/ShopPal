@@ -48,15 +48,12 @@ jobs:
               "cat > deploy/aws/.env <<ENVEOF",
               "MONGO_URI=${{ secrets.MONGO_URI }}",
               "JWT_SECRET=${{ secrets.JWT_SECRET }}",
-              "ALLOWED_ORIGINS=http://${{ secrets.EC2_PUBLIC_IP }}",
+              "ALLOWED_ORIGINS=http://43.204.28.36",
               "EMAIL_USER=${{ secrets.EMAIL_USER }}",
               "EMAIL_PASS=${{ secrets.EMAIL_PASS }}",
               "EMAIL_TO=${{ secrets.EMAIL_TO }}",
               "KAFKA_BROKERS=kafka:9092",
               "ENVEOF",
-
-              "echo '=== Debug ENV ==='",
-              "cat deploy/aws/.env",
 
               "echo '=== Running Docker Compose ==='",
               "cd deploy/aws",
