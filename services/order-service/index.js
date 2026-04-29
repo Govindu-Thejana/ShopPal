@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 import dns from "node:dns";
 
 // ===== MongoDB Connection =====
-const MONGO_URI = "mongodb+srv://nisalmicro:micro1234@microcluster.w872zhn.mongodb.net/?retryWrites=true&w=majority&appName=microcluster";
+const MONGO_URI = "mongodb+srv://govinducloud:cloud1234@cloudcluster.w872zhn.mongodb.net/?retryWrites=true&w=majority&appName=microcluster";
 
 const connectMongo = async () => {
   try {

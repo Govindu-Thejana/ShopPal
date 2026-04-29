@@ -47,10 +47,10 @@ const SECRET_KEY = "supersecretkey";
 
 /* ------------- In-memory users ------------- */
 const users = [
-  { id: 1, username: "nisal", password: "123456", role: "admin" },
-  { id: 2, username: "alice", password: "password", role: "seller" },
-  { id: 3, username: "hiruna", password: "hii@1234", role: "admin" },
-  { id: 4, username: "user1", password: "hii@user1", role: "user" },
+  { id: 1, username: "admin", password: "123456", role: "admin" },
+  { id: 2, username: "govindu", password: "password", role: "seller" },
+  { id: 3, username: "yasiru", password: "hii@1234", role: "admin" },
+  { id: 4, username: "pasan", password: "hii@user1", role: "user" },
 ];
 
 /* ------------- Health ------------- */

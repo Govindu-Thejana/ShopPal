@@ -65,9 +65,6 @@ List topics:
 docker exec kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
 ```
 
-<<<<<<< HEAD
-## 3) Configure Email Service Env
-=======
 ### 5. API Gateway (Nginx)
 
 A local Nginx API gateway is provided at `services/gateway`.
@@ -99,19 +96,18 @@ curl http://localhost:8088/gateway/health
 # auth login
 curl -X POST http://localhost:8088/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"nisal","password":"123456"}'
+  -d '{"username":"shoppal","password":"123456"}'
 
 # payment
 curl -X POST http://localhost:8088/api/payments/payment-service \
   -H "Content-Type: application/json" \
-  -d '{"username":"nisal","cart":[{"id":1,"name":"Item","price":10.5}]}'
+  -d '{"username":"shoppal","cart":[{"id":1,"name":"Item","price":10.5}]}'
 
 # analytics summary
 curl http://localhost:8088/api/analytics/dashboard/summary
 ```
 
 ## 🛠️ Development Setup
->>>>>>> d4b4811181c02170531d9ecc36533f5963e49416
 
 Create/update `services/email-service/.env`:
 
@@ -212,10 +208,10 @@ npm run dev
 
 These are hardcoded in `services/login-service/index.js`:
 
-- `nisal` / `123456`
-- `alice` / `password`
-- `hiruna` / `hii@1234`
-- `user1` / `hii@user1`
+- `admin` / `123456`
+- `govindu` / `password`
+- `yasiru` / `hii@1234`
+- `pasan` / ``
 
 ## End-to-End Test (Payment -> Order -> Email -> Analytics)
 

@@ -21,8 +21,7 @@ type: Opaque
 stringData:
   EMAIL_USER: "amarasingheau@gmail.com"
   EMAIL_PASS: "pgww rupq omoj lxir"
-  MONGO_URI: "mongodb+srv://nisalmicro:micro1234@microcluster.w872zhn.mongodb.net/?retryWrites=true&w=majority&appName=microcluster"
----
+  MONGO_URI: ${MONGO_URI:-mongodb+srv://govinducloud:cloud1234@cloudcluster.w872zhn.mongodb.net/?retryWrites=true&w=majority&appName=microcluster}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
