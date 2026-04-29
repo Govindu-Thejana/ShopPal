@@ -26,6 +26,9 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Deploy via SSM
+        env:
+          DEPLOY_SCRIPT: /opt/shopmate/deploy/aws/deploy.sh
+          DEPLOY_ARGS: APP_DIR=/opt/shopmate APP_NAME=shopmate APP_ENV=prod GITHUB_BRANCH=main
         run: |
           set -e
 
@@ -33,7 +36,7 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --instance-ids "${INSTANCE_ID}" \
             --comment "ShopMate Deploy" \
-            --parameters 'commands=["sudo -u ec2-user env HOME=/home/ec2-user APP_DIR=/opt/shopmate APP_NAME=shopmate APP_ENV=prod GITHUB_BRANCH=main bash /opt/shopmate/deploy/aws/deploy.sh"]' \
+            --parameters "commands=[\"sudo -u ec2-user env HOME=/home/ec2-user ${DEPLOY_ARGS} bash ${DEPLOY_SCRIPT}\"]" \
             --timeout-seconds 900 \
             --query "Command.CommandId" \
             --output text)
@@ -45,7 +48,7 @@ jobs:
             STATUS=$(aws ssm list-command-invocations \
               --command-id "$COMMAND_ID" \
               --query "CommandInvocations[0].Status" \
-              --output text 2>/dev/null || echo "Pending")
+              --output text) || { echo "[$i/90] AWS CLI error while polling status; retrying..."; sleep 10; continue; }
 
             echo "[$i/90] Status: $STATUS"
 
