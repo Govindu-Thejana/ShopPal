@@ -37,7 +37,7 @@ services:
       - KAFKA_CLUSTERS_0_READONLY=false
       - KAFKA_CLUSTERS_0_TOPIC_AUTO_CREATE=true
     depends_on:
-      kafka:
+      - kafka
 
   login-service:
     build:
@@ -49,7 +49,7 @@ services:
       NODE_ENV: production
       KAFKA_BROKERS: kafka:9092
     depends_on:
-      kafka:
+      - kafka
 
   payment-service:
     build:
@@ -61,7 +61,7 @@ services:
       NODE_ENV: production
       KAFKA_BROKERS: kafka:9092
     depends_on:
-      kafka:
+      - kafka
 
   order-service:
     build:
@@ -72,7 +72,7 @@ services:
       KAFKA_BROKERS: kafka:9092
       MONGO_URI: ${MONGO_URI:-mongodb+srv://nisalmicro:micro1234@microcluster.w872zhn.mongodb.net/?retryWrites=true&w=majority&appName=microcluster}
     depends_on:
-      kafka:
+      - kafka
 
   analytic-service:
     build:
@@ -85,7 +85,7 @@ services:
       KAFKA_BROKERS: kafka:9092
       PORT: 8001
     depends_on:
-      kafka:
+      - kafka
 
   email-service:
     build:
@@ -97,7 +97,7 @@ services:
     env_file:
       - ./services/email-service/.env
     depends_on:
-      kafka:
+      - kafka
 
   api-gateway:
     image: nginx:1.27-alpine
