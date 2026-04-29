@@ -17,6 +17,7 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Configure AWS
@@ -37,20 +38,20 @@ jobs:
             --instance-ids "${INSTANCE_ID}" \
             --comment "ShopMate Deploy" \
             --parameters "commands=[\"sudo -u ec2-user env HOME=/home/ec2-user ${DEPLOY_ARGS} bash ${DEPLOY_SCRIPT}\"]" \
-            --timeout-seconds 900 \
+            --timeout-seconds 2400 \
             --query "Command.CommandId" \
             --output text)
 
           echo "Command ID: $COMMAND_ID"
           echo "Waiting for deployment..."
 
-          for i in {1..90}; do
+          for i in {1..240}; do
             STATUS=$(aws ssm list-command-invocations \
               --command-id "$COMMAND_ID" \
               --query "CommandInvocations[0].Status" \
-              --output text) || { echo "[$i/90] AWS CLI error while polling status; retrying..."; sleep 10; continue; }
+              --output text) || { echo "[$i/240] AWS CLI error while polling status; retrying..."; sleep 10; continue; }
 
-            echo "[$i/90] Status: $STATUS"
+            echo "[$i/240] Status: $STATUS"
 
             if [ "$STATUS" = "Success" ]; then
               echo "Deployment succeeded"
@@ -78,5 +79,5 @@ jobs:
             sleep 10
           done
 
-          echo "Deployment timed out after 15 minutes"
+          echo "Deployment timed out after 40 minutes"
           exit 1
