@@ -27,8 +27,7 @@ This README is focused on running everything locally on Windows (PowerShell).
 - Node.js 18+
 - npm 9+
 - Docker Desktop
-- Internet access (MongoDB Atlas + SMTP for email service)
-
+- 
 ## 1) Start Kafka
 
 Open PowerShell terminal 1:
@@ -92,16 +91,6 @@ Examples:
 ```bash path=null start=null
 # health
 curl http://localhost:8088/gateway/health
-
-# auth login
-curl -X POST http://localhost:8088/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"shoppal","password":"123456"}'
-
-# payment
-curl -X POST http://localhost:8088/api/payments/payment-service \
-  -H "Content-Type: application/json" \
-  -d '{"username":"shoppal","cart":[{"id":1,"name":"Item","price":10.5}]}'
 
 # analytics summary
 curl http://localhost:8088/api/analytics/dashboard/summary
@@ -203,15 +192,6 @@ npm run dev
 - Login service health: `http://localhost:7070/`
 - Analytics summary: `http://localhost:8001/dashboard/summary`
 - Kafka UI: `http://localhost:9090`
-
-## Existing Login Credentials
-
-These are hardcoded in `services/login-service/index.js`:
-
-- `admin` / `123456`
-- `govindu` / `password`
-- `yasiru` / `hii@1234`
-- `pasan` / ``
 
 ## End-to-End Test (Payment -> Order -> Email -> Analytics)
 
